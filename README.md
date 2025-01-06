@@ -4,7 +4,7 @@
 <a href="https://github.com/ShaanCoding/ReadME-Generator">
 <img src="https://avatars.githubusercontent.com/u/5869420?s=200&v=4" alt="Logo" width="80" height="80">
 </a>
-<h3 align="center">Quantifying  the effectiveness of new generation bed nets against malaria, from entomological trials to real life conditions</h3>
+<h3 align="center">Cascades of effectiveness of new-generation insecticide-treated nets against malaria, from entomological trials to real-life conditions</h3>
 <p align="center">
 <br/>
 <br/>
