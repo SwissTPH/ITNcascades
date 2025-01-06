@@ -7,17 +7,20 @@
 <h3 align="center">Cascades of effectiveness of new-generation insecticide-treated nets against malaria, from entomological trials to real-life conditions</h3>
 <p align="center">
 <br/>
-<br/>
-<a href="https://git.scicore.unibas.ch/idm/countrymodelling/metapopulationmodel"><strong>Explore the docs »</strong></a>
 
 </p>
 </div>
 
 ## About The Project
 
-This code is associated with the following manuscript: Quantifying  the effectiveness of new generation bed nets against malaria, from entomological trials to real life conditions.
+This code is associated with the following manuscript: 
+
+__Cascades of effectiveness of new-generation insecticide-treated nets against malaria, from entomological trials to real-life conditions__  
+Clara Champagne, Jeanne Lemant, Alphonce Assenga, Ummi A. Kibondo, Ruth G. Lekundayo, Emmanuel Mbuba, Jason Moore, Joseph B. Muganga, Watson S. Ntabaliba, Olukayode G. Odufuwa, Johnson Kyeba Swai, Maria Alexa, Roland Goers, Monica Golumbeanu, Nakul Chitnis, Amanda Ross, Sarah Moore, Emilie Pothin
+
+
 The user should refer to the manuscript for methodological details. 
-Additionally, a dashboard to explore the results is available [here](https://aimswisstph.shinyapps.io/cascadedashboard/).
+Additionally, a dashboard to explore the results is available [here](https://aimswisstph.shinyapps.io/ITNcascadesdashboard/).
 
 
 
@@ -61,7 +64,7 @@ Other scripts are functions to be sourced while running the analysis.
 
 ## Authors contact
 
-- Clara CHAMPAGNE - [@GitUnibas](https://git.scicore.unibas.ch/champa0000) - [@GitHub](https://github.com/clchampag) - clara.champagne@swisstph.ch
+- Clara CHAMPAGNE - [@GitHub](https://github.com/clchampag) - clara.champagne@swisstph.ch
 
 
 ## Credits
