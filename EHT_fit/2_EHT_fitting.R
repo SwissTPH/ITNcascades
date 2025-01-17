@@ -358,182 +358,6 @@ write.csv(rbind(estimates_bit080_washed_24,
 
 
 
-
-#######################
-# PLOT SUMMARY
-######################
-estimates_kibondo_72=read.csv(file.path(outputsDir, "estimates_kibondo_washed_72.csv"))
-estimates_kibondo_24=read.csv(file.path(outputsDir, "estimates_kibondo_washed_24.csv"))
-
-estimates_bit059=read.csv(file.path(outputsDir, "estimates_bit059_washed_24.csv"))
-
-estimates_bit055=read.csv(file.path(outputsDir, "estimates_bit055_washed_24.csv"))
-
-estimates_bit080_72=read.csv(file.path(outputsDir, "estimates_bit080_washed_72.csv"))
-estimates_bit080_24=read.csv(file.path(outputsDir, "estimates_bit080_washed_24.csv"))
-
-estimates_bit103_72=read.csv(file.path(outputsDir, "estimates_bit103_washed72.csv"))
-estimates_bit103_24=read.csv(file.path(outputsDir, "estimates_bit103_washed24.csv"))
-
-#############################
-# endpoint: longest available per trial
-
-# formating the results
-all_estimates=rbind(estimates_kibondo_72 %>%mutate(EHT="Kibondo et al. 2022", EHT_short="Kibondo", insecticide_name="InterceptorG2"),
-                    estimates_bit055 %>%mutate(EHT="BIT055", EHT_short=EHT),
-                    estimates_bit059 %>%mutate(EHT="BIT059", EHT_short=EHT),
-                    estimates_bit080_72 %>%mutate(EHT="BIT080", EHT_short=EHT),
-                    estimates_bit103_72 %>%mutate(EHT="BIT103", EHT_short=EHT)
-)%>%
-  mutate(insecticide_name=ifelse(insecticide_name %in% c("IG2", "Interceptor_G2","InterceptorG2","Interceptor®G2", "Interceptor\xaeG2"), "Interceptor G2",
-                                 ifelse(insecticide_name %in% c("Olyset_Plus", "OlysetPlus"), "Olyset Plus", insecticide_name)),
-         param2=gsub("Initial", "", gsub("Efficacy", "", gsub("Rate" ,"",  param))))%>%
-  mutate(EHT=gsub(" et al.", "\net al.", EHT))
-
-all_estimates$param2=factor(all_estimates$param2, levels=c("Repellency",  "KillingDuringHostSeeking","Preprandialkilling", "Postprandialkilling"),
-                            labels=c("Reduction in host availability",  "Increase in host seeking mortality",  "Pre-prandial killing effect","Post-prandial killing effect"))
-
-all_estimates_simple=all_estimates %>%
-  mutate(washed_status=ifelse(washed_status=="Washed20", "Washed", washed_status),
-         label_height=ifelse(param2=="Increase in host seeking mortality",-0.07, -0.03))
-
-whitepointforscale=all_estimates_simple%>% filter(EHT_short=="Kibondo", washed_status=="Washed")%>%
-  mutate(mean=NA, X2.5.=NA, X97.5.=NA,
-         test=1)
-
-# plot all estimates
-all_estimates_simple %>%
-  mutate( washed_status=ifelse(washed_status=="Unwashed", "Unwashed", "Washed 20x"))%>%
-  ggplot()+
-  geom_col(aes(x=insecticide_name, y=mean, fill=insecticide_name, group=interaction( washed_status, EHT), alpha=washed_status), stat="identity", position=position_dodge(preserve = "single"))+
-  geom_errorbar(aes(x=insecticide_name, ymin=X2.5., ymax=X97.5., color=insecticide_name,  group=interaction( washed_status, EHT)),position=position_dodge(0.9, preserve = "single"), width=0.4)+
-  geom_point(data=whitepointforscale, aes(x=insecticide_name, y=test), width=0.4, color="white")+
-  #facet_grid( . ~param2, scales = "free")+
-  facet_wrap( . ~param2, scales = "free")+
-  theme_bw()+#ylim(0,1)+
-  labs(x="", y="", color="", fill="", alpha="")+
-  scale_alpha_manual(values=c(  0.8, 0.5),na.translate=FALSE)+
-  scale_color_manual(values=c("darkorange","dodgerblue","darkblue", "red", "orange"  ))+
-  scale_fill_manual(values=c("darkorange","dodgerblue","darkblue", "red", "orange" ))+
-  theme(legend.position = "bottom",
-        strip.text.x = element_text(size = 14),
-        axis.text=element_text(size=14), strip.background =element_rect(fill="white"), legend.text =element_text(size=14) )+ 
-  geom_text(aes(label=EHT_short, x=insecticide_name, y=label_height,group=EHT),
-            position = position_dodge(width=0.9),size=3.5)+#ylim(-0.05,1)+ 
-  guides(fill = "none",color = "none")
-ggsave(file.path(plotDir, "plot_EHTfit_all.png"), width=9, height=12)
-
-
-
-
-final_table=all_estimates_simple %>%
-  select(insecticide_name, EHT_short, param2, washed_status, mean, X2.5., X97.5.)%>%
-  rename(netType=insecticide_name, parameter=param2, q025=X2.5., q975=X97.5., EHT=EHT_short)%>%
-  tidyr::pivot_wider(id_cols =c( netType, EHT, parameter), names_from = washed_status, values_from = c(mean, q025, q975) )%>%
-  mutate(halflife_insecticide=3/(1-mean_Washed/mean_Unwashed)
-  )
-
-write.csv(final_table, file.path(scriptDir, "../FOR_OM_USERS/fitted_parameters_all_new.csv"), row.names = F)
-
-final_table %>%
-  select(-halflife_insecticide)%>%
-  pivot_longer(cols = c("mean_Washed" , "mean_Unwashed","q025_Washed"   ,       "q025_Unwashed"       
-                        ,"q975_Washed"    ,      "q975_Unwashed"))%>%
-  separate(name, into=c("param", "wash_status"))%>%
-  ungroup()%>%
-  pivot_wider(id_cols = c(wash_status, parameter, netType,EHT ), names_from = param, values_from = value)%>%
-  mutate(value=paste0(mean, " (", q025, "-", q975, ")"))%>%
-  select(-mean, -q025, -q975)%>%
-  pivot_wider(id_cols = c(parameter, netType,EHT ), names_from = wash_status, values_from = value)%>%
-  arrange(parameter, netType, EHT)%>%
-  select(parameter, netType, EHT, Unwashed, Washed)%>%
-  rename("Net type"=netType, "Washed 20x"=Washed)%>%
-  gt()%>%
-  gt::gtsave(filename = file.path(plotDir, "outputs_ento_efficacy_all.docx"))
-
-
-
-######################
-# 24H EVERYWHERE
-
-# formating the results
-all_estimates_24=rbind(estimates_kibondo_24 %>%mutate(EHT="Kibondo et al. 2022", EHT_short="Kibondo", insecticide_name="InterceptorG2"),
-                    estimates_bit055 %>%mutate(EHT="BIT055", EHT_short=EHT),
-                    estimates_bit059 %>%mutate(EHT="BIT059", EHT_short=EHT),
-                    estimates_bit080_24 %>%mutate(EHT="BIT080", EHT_short=EHT),
-                    estimates_bit103_24 %>%mutate(EHT="BIT103", EHT_short=EHT)
-)%>%
-  mutate(insecticide_name=ifelse(insecticide_name %in% c("IG2", "Interceptor_G2", "InterceptorG2","Interceptor®G2", "Interceptor\xaeG2"), "Interceptor G2",
-                                 ifelse(insecticide_name %in% c("Olyset_Plus", "OlysetPlus"), "Olyset Plus", insecticide_name)),
-         param2=gsub("Initial", "", gsub("Efficacy", "", gsub("Rate" ,"",  param))))%>%
-  mutate(EHT=gsub(" et al.", "\net al.", EHT))
-
-all_estimates_24$param2=factor(all_estimates_24$param2, levels=c("Repellency",  "KillingDuringHostSeeking","Preprandialkilling", "Postprandialkilling"),
-                            labels=c("Reduction in host availability",  "Increase in host seeking mortality",  "Pre-prandial killing effect","Post-prandial killing effect"))
-
-all_estimates_24_simple=all_estimates_24 %>%
-  filter(insecticide_name %in% c("Interceptor G2", "Olyset Plus"))%>%
-  mutate(washed_status=ifelse(washed_status=="Washed20", "Washed", washed_status),
-         label_height=ifelse(param2=="Increase in host seeking mortality",-0.07, -0.03))
-
-whitepointforscale=all_estimates_24_simple%>% filter(EHT_short=="Kibondo", washed_status=="Washed")%>%
-  mutate(mean=NA, X2.5.=NA, X97.5.=NA,
-         test=c(1,1,1,NA))
-
-# plot all estimates
-all_estimates_24_simple %>%
-  mutate( washed_status=ifelse(washed_status=="Unwashed", "Unwashed", "Washed 20x"))%>%
-  ggplot()+
-  geom_col(aes(x=insecticide_name, y=mean, fill=insecticide_name, group=interaction( washed_status, EHT), alpha=washed_status), stat="identity", position=position_dodge(preserve = "single"))+
-  geom_errorbar(aes(x=insecticide_name, ymin=X2.5., ymax=X97.5., color=insecticide_name,  group=interaction( washed_status, EHT)),position=position_dodge(0.9, preserve = "single"), width=0.4)+
-  geom_point(data=whitepointforscale, aes(x=insecticide_name, y=test), width=0.4, color="white")+
-  #facet_grid( . ~param2, scales = "free")+
-  facet_wrap( . ~param2, scales = "free")+
-  theme_bw()+#ylim(0,1)+
-  labs(x="", y="", color="", fill="", alpha="")+
-  scale_alpha_manual(values=c(  0.8, 0.5),na.translate=FALSE)+
-  scale_color_manual(values=c("darkorange","dodgerblue","darkblue", "red", "orange"  ))+
-  scale_fill_manual(values=c("darkorange","dodgerblue","darkblue", "red", "orange" ))+
-  theme(legend.position = "bottom",
-        strip.text.x = element_text(size = 14),
-        axis.text=element_text(size=14), strip.background =element_rect(fill="white"), legend.text =element_text(size=14) )+ 
-  geom_text(aes(label=EHT_short, x=insecticide_name, y=label_height,group=EHT),
-            position = position_dodge(width=0.9),size=3.5)+#ylim(-0.05,1)+ 
-  guides(fill = "none",color = "none")
-ggsave(file.path(plotDir, "plot_EHTfit_24_all.png"), width=9, height=12)
-
-
-
-
-final_table_24=all_estimates_24_simple %>%
-  select(insecticide_name, EHT_short, param2, washed_status, mean, X2.5., X97.5.)%>%
-  rename(netType=insecticide_name, parameter=param2, q025=X2.5., q975=X97.5., EHT=EHT_short)%>%
-  tidyr::pivot_wider(id_cols =c( netType, EHT, parameter), names_from = washed_status, values_from = c(mean, q025, q975) )%>%
-  mutate(halflife_insecticide=3/(1-mean_Washed/mean_Unwashed)
-  )
-
-write.csv(final_table_24, file.path(scriptDir, "../FOR_OM_USERS/fitted_parameters_24_all_new.csv"), row.names = F)
-
-final_table_24 %>%
-  select(-halflife_insecticide)%>%
-  pivot_longer(cols = c("mean_Washed" , "mean_Unwashed","q025_Washed"   ,       "q025_Unwashed"       
-                        ,"q975_Washed"    ,      "q975_Unwashed"))%>%
-  separate(name, into=c("param", "wash_status"))%>%
-  ungroup()%>%
-  pivot_wider(id_cols = c(wash_status, parameter, netType,EHT ), names_from = param, values_from = value)%>%
-  mutate(value=paste0(mean, " (", q025, "-", q975, ")"))%>%
-  select(-mean, -q025, -q975)%>%
-  pivot_wider(id_cols = c(parameter, netType,EHT ), names_from = wash_status, values_from = value)%>%
-  arrange(parameter, netType, EHT)%>%
-  select(parameter, netType, EHT, Unwashed, Washed)%>%
-  rename("Net type"=netType, "Washed 20x"=Washed)%>%
-  gt()%>%
-  gt::gtsave(filename = file.path(plotDir, "outputs_ento_efficacy_24_all.docx"))
-
-
-
-
-
 #####################################################################
 # COMPUTE VECTORIAL CAPACITY REDUCTION
 ####################################################################
@@ -813,7 +637,7 @@ final_table %>%
 # endpoint: 24h everywhere
 
 # formating the results
-all_estimates=rbind(estimates_kibondo_24 %>%mutate(EHT="Kibondo et al. 2022", EHT_short="Kibondo", insecticide_name="InterceptorG2"),
+all_estimates_24=rbind(estimates_kibondo_24 %>%mutate(EHT="Kibondo et al. 2022", EHT_short="Kibondo", insecticide_name="InterceptorG2"),
                     estimates_bit055 %>%mutate(EHT="BIT055", EHT_short=EHT),
                     estimates_bit059 %>%mutate(EHT="Odufuwa et al. 2024", EHT_short=EHT),
                     estimates_bit080_24 %>%mutate(EHT="BIT080", EHT_short=EHT),
@@ -826,25 +650,25 @@ all_estimates=rbind(estimates_kibondo_24 %>%mutate(EHT="Kibondo et al. 2022", EH
   mutate(EHT=gsub(" et al.", "\net al.", EHT))%>% 
   filter(param2 !="KillingDuringHostSeeking")
 
-all_estimates$param2=factor(all_estimates$param2, levels=c("Repellency", "Preprandialkilling", "Postprandialkilling", "VCred"),
+all_estimates_24$param2=factor(all_estimates_24$param2, levels=c("Repellency", "Preprandialkilling", "Postprandialkilling", "VCred"),
                             labels=c("Reduction in host availability",  "Pre-prandial killing effect","Post-prandial killing effect", "Reduction in vectorial capacity"))
-all_estimates$EHT=factor(all_estimates$EHT, levels=c("BIT103", "Kibondo\net al. 2022", "BIT080", "BIT055", "Odufuwa\net al. 2024"))
+all_estimates_24$EHT=factor(all_estimates_24$EHT, levels=c("BIT103", "Kibondo\net al. 2022", "BIT080", "BIT055", "Odufuwa\net al. 2024"))
 
-all_estimates_simple=all_estimates %>%
+all_estimates_simple_24=all_estimates_24 %>%
   mutate(washed_status=ifelse(washed_status=="Washed20", "Washed", washed_status),
          label_height=ifelse(param2=="Increase in host seeking mortality",-0.07, -0.03))
 
-whitepointforscale=all_estimates_simple%>% filter(EHT_short=="Kibondo", washed_status=="Washed")%>%
+whitepointforscale_24=all_estimates_simple_24%>% filter(EHT_short=="Kibondo", washed_status=="Washed")%>%
   mutate(mean=NA, X2.5.=NA, X97.5.=NA,
          test=1)
 
 # plot all estimates
-all_estimates_simple %>%
+all_estimates_simple_24 %>%
   mutate( washed_status=ifelse(washed_status=="Unwashed", "Unwashed", "Washed 20x"))%>%
   ggplot()+
   geom_col(aes(x=insecticide_name, y=mean, fill=insecticide_name, group=interaction( washed_status, EHT), alpha=washed_status), stat="identity", position=position_dodge(preserve = "single"))+
   geom_errorbar(aes(x=insecticide_name, ymin=X2.5., ymax=X97.5., color=insecticide_name,  group=interaction( washed_status, EHT)),position=position_dodge(0.9, preserve = "single"), width=0.4)+
-  geom_point(data=whitepointforscale, aes(x=insecticide_name, y=test), width=0.4, color="white")+
+  geom_point(data=whitepointforscale_24, aes(x=insecticide_name, y=test), width=0.4, color="white")+
   #facet_grid( . ~param2, scales = "free")+
   facet_wrap( . ~param2, scales = "free")+
   theme_bw()+#ylim(0,1)+
@@ -862,7 +686,16 @@ ggsave(file.path(plotDir, "plot_EHTfit_all_VCred_24.png"), width=10, height=12)
 
 
 
-final_table %>%
+final_table_24=all_estimates_simple_24 %>%
+  mutate(mean=round(mean, digits = 2),X2.5.=round(X2.5., digits = 2),X97.5.=round(X97.5., digits = 2))%>%
+  select(insecticide_name, EHT_short, param2, washed_status, mean, X2.5., X97.5.)%>%
+  rename(netType=insecticide_name, parameter=param2, q025=X2.5., q975=X97.5., EHT=EHT_short)%>%
+  tidyr::pivot_wider(id_cols =c( netType, EHT, parameter), names_from = washed_status, values_from = c(mean, q025, q975) )%>%
+  mutate(halflife_insecticide=3/(1-mean_Washed/mean_Unwashed)
+  )
+
+
+final_table_24 %>%
   select(-halflife_insecticide)%>%
   pivot_longer(cols = c("mean_Washed" , "mean_Unwashed","q025_Washed"   ,       "q025_Unwashed"       
                         ,"q975_Washed"    ,      "q975_Unwashed"))%>%
