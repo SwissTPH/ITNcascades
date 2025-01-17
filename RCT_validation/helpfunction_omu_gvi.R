@@ -13,6 +13,36 @@ return_anophelesParam=function(mosqs, value_effect){
   return(anophelesParams)
 }
 
+
+
+extract_GVI_params=function(EHT, netType, halflife_functionalSurvival, kappa_functionalSurvival, exposure_correction, myname, mosqs, parameters_GVI){
+  my_GVI_params=update_halflife_insecticideDecay(my_parameters_GVI=parameters_GVI,
+                                                 halflife=halflife_functionalSurvival, kappa=kappa_functionalSurvival,
+                                                 my_EHT =EHT, my_netType=netType)
+  
+  
+  create_vectorInterventionParameters_3decays(deterrency = my_GVI_params$mean_Unwashed[my_GVI_params$parameter=="Reduction in host availability"],
+                                              preprandial = my_GVI_params$mean_Unwashed[my_GVI_params$parameter=="Pre-prandial killing effect"],
+                                              postprandial = my_GVI_params$mean_Unwashed[my_GVI_params$parameter=="Post-prandial killing effect"],
+                                              deterrency_inf = my_GVI_params$q025_Unwashed[my_GVI_params$parameter=="Reduction in host availability"],
+                                              preprandial_inf = my_GVI_params$q025_Unwashed[my_GVI_params$parameter=="Pre-prandial killing effect"],
+                                              postprandial_inf =  my_GVI_params$q025_Unwashed[my_GVI_params$parameter=="Post-prandial killing effect"],
+                                              deterrency_sup = my_GVI_params$q975_Unwashed[my_GVI_params$parameter=="Reduction in host availability"],
+                                              preprandial_sup = my_GVI_params$q975_Unwashed[my_GVI_params$parameter=="Pre-prandial killing effect"],
+                                              postprandial_sup =  my_GVI_params$q975_Unwashed[my_GVI_params$parameter=="Post-prandial killing effect"],
+                                              
+                                              L_deterrency=my_GVI_params$final_hl[my_GVI_params$parameter=="Reduction in host availability"],
+                                              kappa_deterrency=my_GVI_params$final_kappa[my_GVI_params$parameter=="Reduction in host availability"],
+                                              L_preprandial=my_GVI_params$final_hl[my_GVI_params$parameter=="Pre-prandial killing effect"],
+                                              kappa_preprandial=my_GVI_params$final_kappa[my_GVI_params$parameter=="Pre-prandial killing effect"],
+                                              L_postprandial=my_GVI_params$final_hl[my_GVI_params$parameter=="Post-prandial killing effect"],
+                                              kappa_postprandial=my_GVI_params$final_kappa[my_GVI_params$parameter=="Post-prandial killing effect"],
+                                              decay= "weibull",exposure_correction=exposure_correction,  myname= myname, mosqs = mosqs)
+}
+
+
+
+
 create_vectorInterventionParameters_3decays = function(deterrency, preprandial, postprandial,
                                                          deterrency_inf, preprandial_inf, postprandial_inf,
                                                          deterrency_sup, preprandial_sup, postprandial_sup,
@@ -54,9 +84,9 @@ create_vectorInterventionParameters_3decays = function(deterrency, preprandial, 
 create_vectorInterventionParameters = function(deterrency, preprandial, postprandial,
                                                 L, kappa, decay= "weibull", myname, mosqs){
 
-  anophParam_deterrency=return_anophelesParam(mosqs, deterrency)
-  anophParam_preprandial=return_anophelesParam(mosqs, preprandial)
-  anophParam_postprandial=return_anophelesParam(mosqs, postprandial)
+  anophParam_deterrency=return_anophelesParam(mosqs, value_effect = deterrency)
+  anophParam_preprandial=return_anophelesParam(mosqs, value_effect = preprandial)
+  anophParam_postprandial=return_anophelesParam(mosqs, value_effect = postprandial)
 
   myvectorInterventionParameters <- list(
     myname = list(
@@ -141,5 +171,72 @@ defineGVI_simple=function (baseList, vectorInterventionParameters, append = TRUE
     #}
   }
   return(baseList)
+}
+
+optimise_decay_param=function(param, insecticide, df){
+  #if(param[3]<1){
+  out=data.frame(
+    time=df %>% filter(setting==insecticide) %>% pull(time),
+    decay_obs=df %>% filter(setting==insecticide) %>% pull(ITNcov)
+  )%>%
+    mutate(decay=param[3]*exp( -(time/(param[1]))^param[2] * log(2) ),
+           diff=(decay-decay_obs)^2)%>%
+    summarise(diff=sum(diff))
+  # } else {
+  #   out=Inf
+  # }
+  return(out)
+}
+optimise_decay_param_hill=function(param, insecticide){
+  #if(param[3]<1){
+  data.frame(
+    time=ITN_cov %>% filter(setting==insecticide) %>% pull(time),
+    decay_obs=ITN_cov %>% filter(setting==insecticide) %>% pull(ITNcov)
+  )%>%
+    mutate(decay=param[3] / (1 + (time/param[1])^param[2]),
+           diff=(decay-decay_obs)^2)%>%
+    summarise(diff=sum(diff))
+  # } else {
+  #   out=Inf
+  # }
+}
+
+calculate_param=function(insecticide, opti_fun="weibull", df){
+  opti_function=ifelse(opti_fun=="weibull", optimise_decay_param, optimise_decay_param_hill)
+  opti=optim(c(0.448, 1.11, 0.7), opti_function, insecticide=insecticide, df=df , method = "L-BFGS-B", lower=c(0, 0, 0), upper = c(Inf, Inf, 1) )$par
+  names(opti)=c("L", "k", "a")
+  opti$setting=insecticide
+  opti$decay=opti_fun
+  return(opti)
+}
+
+update_halflife_insecticideDecay=function(my_parameters_GVI, halflife, kappa, my_EHT, my_netType){
+  this.parameters_GVI=my_parameters_GVI%>%
+    filter(netType==my_netType, EHT==my_EHT)%>%
+    mutate(L_functionalSurvival=halflife,
+           kappa_functionalSurvival=kappa)
+  
+  df=data.frame(time=seq(0, 365*3))%>%
+    mutate( weibull=exp( -(time/halflife)^kappa * log(2) ))
+  
+  for(i in 1:nrow(this.parameters_GVI)){
+    this.line=this.parameters_GVI[i,]
+    
+    if(is.na(this.line$halflife_insecticide)){
+      this.parameters_GVI$final_hl[i]=halflife
+      this.parameters_GVI$final_kappa[i]=kappa
+    } else {
+      this.df=df %>% mutate(
+        linear= 1-time/this.line$halflife_insecticide,
+        ITNcov=weibull*linear, setting="test")
+      
+      product_fit=calculate_param("test", opti_fun="weibull", df=this.df)
+      
+      this.parameters_GVI$final_hl[i]=round(product_fit$L, digits = 1)
+      this.parameters_GVI$final_kappa[i]=round(product_fit$k, digits = 1)
+      this.df=NULL
+    }
+  }
+  return(this.parameters_GVI)
 }
 

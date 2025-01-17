@@ -2,9 +2,9 @@ rm(list=ls())
 
 library(devtools)
 #devtools::install_github("SwissTPH/r-openMalariaUtilities", ref = "master")
-#devtools::install("omuaddons") #run this if you have pulled in your local directory
-#devtools::install("omu-slurm") #run this if you have pulled in your local directory
-#devtools::install("omu-compat") #run this if you have pulled in your local directory
+#devtools::install("/scicore/home/pothin/champa0000/omuaddons") #run this if you have pulled in your local directory
+#devtools::install("/scicore/home/pothin/champa0000/omu-slurm") #run this if you have pulled in your local directory
+#devtools::install("/scicore/home/pothin/champa0000/omu-compat") #run this if you have pulled in your local directory
 
 library(openMalariaUtilities)
 library(tidyverse)
@@ -15,6 +15,7 @@ library(omucompat)
 source("helpfunctions_rct.R")
 source("helpfunction_omu_gvi.R")
 main_folder=(".")
+parameters_GVI=read.csv(file.path(main_folder, "fitted_parameters_all_new_VCred.csv"))
 
 
 # SET EXPERIMENT ----------------------------------------------------------
@@ -32,15 +33,12 @@ experiment_folder=file.path(main_folder, expName)
 ###
 
 # which mosquitoes will be used ?
-mosq  = c("funestus","gambiaesl")
+mosqs  = c("funestus_indoor","gambiaesl_indoor")
 #' Mosha 2022 https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext#sec1
 #' page 1235
 
-# include 'indoor' and 'outdoor' versions?
-mosqs = make_mosquito_name( mosq, inout = T)
-
 # contrib: the relative contribution of each 'mosquito' to EIR
-contrib = c("@fin@", "@gin@","@fout@","@gout@" )
+contrib = c("@fin@", "@gin@" )
 cbind( mosqs, contrib)
 
 
@@ -121,75 +119,54 @@ futITN= create_vectorInterventionParameters(deterrency = 0,
 
 
 exposure=0.69
+halflife_PBO=1.7
+kappa_PBO=1.9
 
-GVI_IG2_kibondo= create_vectorInterventionParameters_3decays(deterrency = 0.15,
-                                                             preprandial = 0.24,
-                                                             postprandial = 0.35,
-                                                              deterrency_inf = 0,
-                                                              preprandial_inf = 0.17,
-                                                              postprandial_inf = 0.05,
-                                                              deterrency_sup = 0.4,
-                                                              preprandial_sup = 0.31,
-                                                              postprandial_sup = 0.65,
+halflife_IG2=2.4
+kappa_IG2=2.4
 
-                                                              L_deterrency=2.1, kappa_deterrency=2.1,
-                                                              L_preprandial=2.2, kappa_preprandial=2.2,
-                                                              L_postprandial=2.0, kappa_postprandial=2.0, decay= "weibull",exposure_correction=exposure,  myname= "futIG2_kibondo", mosqs = mosqs)
+GVI_IG2_kibondo= extract_GVI_params(EHT="Kibondo",
+                                    netType="Interceptor G2",
+                                    halflife_functionalSurvival=halflife_IG2, kappa_functionalSurvival=kappa_IG2,
+                                    exposure_correction=exposure, myname="futIG2_kibondo", mosqs=mosqs,  parameters_GVI=parameters_GVI)
 
 
-GVI_IG2_BIT103= create_vectorInterventionParameters_3decays(deterrency = 0.19,
-                                                            preprandial = 0.21,
-                                                            postprandial = 0.13,
-                                                             deterrency_inf = 0.01,
-                                                             preprandial_inf = 0.15,
-                                                             postprandial_inf = 0.01,
-                                                             deterrency_sup = 0.55,
-                                                             preprandial_sup = 0.26,
-                                                             postprandial_sup = 0.42,
-
-                                                             L_deterrency=1.6, kappa_deterrency=1.8,
-                                                             L_preprandial=1.9, kappa_preprandial=2.0,
-                                                             L_postprandial=1.7, kappa_postprandial=2.0, decay= "weibull",exposure_correction=exposure,  myname= "futIG2_BIT103", mosqs = mosqs)
+GVI_IG2_BIT103= extract_GVI_params(EHT="BIT103",
+                                   netType="Interceptor G2",
+                                   halflife_functionalSurvival=halflife_IG2, kappa_functionalSurvival=kappa_IG2,
+                                   exposure_correction=exposure, myname="futIG2_BIT103", mosqs=mosqs,  parameters_GVI=parameters_GVI)
 
 
-
-# we take the OlysetPlus parameterisation, as this is what is given in Mosha trial
-GVI_PBO_BIT055= create_vectorInterventionParameters_3decays(deterrency = 0.61,
-                                                            preprandial = 0.15,
-                                                            postprandial = 0.34,
-                                                            deterrency_inf = 0.45,
-                                                            preprandial_inf = 0.1,
-                                                            postprandial_inf = 0.1,
-                                                            deterrency_sup = 0.74,
-                                                            preprandial_sup = 0.19,
-                                                            postprandial_sup = 0.56,
-
-                                                            L_deterrency=1.3, kappa_deterrency=1.7,
-                                                            L_preprandial=1.1, kappa_preprandial=1.7,
-                                                            L_postprandial=1.3, kappa_postprandial=1.7, decay= "weibull",exposure_correction=exposure,  myname= "futPBO_BIT055", mosqs = mosqs)
+GVI_IG2_BIT080= extract_GVI_params(EHT="BIT080",
+                                   netType="Interceptor G2",
+                                   halflife_functionalSurvival=halflife_IG2, kappa_functionalSurvival=kappa_IG2,
+                                   exposure_correction=exposure, myname="futIG2_BIT080", mosqs=mosqs,  parameters_GVI=parameters_GVI)
 
 
-GVI_PBO_BIT103= create_vectorInterventionParameters_3decays(deterrency = 0.25,
-                                                            preprandial = 0.05,
-                                                            postprandial = 0.21,
-                                                            deterrency_inf = 0.01,
-                                                            preprandial_inf = 0,
-                                                            postprandial_inf = 0.01,
-                                                            deterrency_sup = 0.65,
-                                                            preprandial_sup = 0.13,
-                                                            postprandial_sup = 0.59,
+GVI_PBO_BIT055= extract_GVI_params(EHT="BIT055",
+                                   netType="Olyset Plus",
+                                   halflife_functionalSurvival=halflife_PBO, kappa_functionalSurvival=kappa_PBO,
+                                   exposure_correction=exposure, myname="futPBO_BIT055", mosqs=mosqs, parameters_GVI=parameters_GVI)
 
-                                                            L_deterrency=1.7, kappa_deterrency=1.9,
-                                                            L_preprandial=1.0, kappa_preprandial=1.7,
-                                                            L_postprandial=1.5, kappa_postprandial=1.8, decay= "weibull",exposure_correction=exposure,  myname= "futPBO_BIT103", mosqs = mosqs)
+GVI_PBO_BIT059= extract_GVI_params(EHT="BIT059",
+                                   netType="Olyset Plus",
+                                   halflife_functionalSurvival=halflife_PBO, kappa_functionalSurvival=kappa_PBO,
+                                   exposure_correction=exposure, myname="futPBO_BIT059", mosqs=mosqs, parameters_GVI=parameters_GVI)
+
+GVI_PBO_BIT103= extract_GVI_params(EHT="BIT103",
+                                   netType="Olyset Plus",
+                                   halflife_functionalSurvival=halflife_PBO, kappa_functionalSurvival=kappa_PBO,
+                                   exposure_correction=exposure, myname="futPBO_BIT103", mosqs=mosqs,  parameters_GVI=parameters_GVI)
 
 
 
 list_GVI_snippets=list(histITN, futITN)
 list_GVI_snippets=append(list_GVI_snippets, GVI_IG2_kibondo)
 list_GVI_snippets=append(list_GVI_snippets, GVI_IG2_BIT103)
+list_GVI_snippets=append(list_GVI_snippets, GVI_IG2_BIT080)
 list_GVI_snippets=append(list_GVI_snippets, GVI_PBO_BIT103)
 list_GVI_snippets=append(list_GVI_snippets, GVI_PBO_BIT055)
+list_GVI_snippets=append(list_GVI_snippets, GVI_PBO_BIT059)
 
 for(GVI_param in list_GVI_snippets){
   baseList= defineGVI_simple(baseList = baseList,
@@ -235,6 +212,8 @@ baseList <- deploy_it_compat(
 ## Future IG2
 list_GVI_snippets_id=c("futIG2_kibondo","futIG2_kibondo_inf","futIG2_kibondo_sup",
                        "futIG2_BIT103","futIG2_BIT103_sup","futIG2_BIT103_inf",
+                       "futIG2_BIT080","futIG2_BIT080_sup","futIG2_BIT080_inf",
+                       "futPBO_BIT059","futPBO_BIT059_sup","futPBO_BIT059_inf",
                        "futPBO_BIT055","futPBO_BIT055_sup","futPBO_BIT055_inf",
                        "futPBO_BIT103","futPBO_BIT103_sup","futPBO_BIT103_inf")
 
@@ -326,22 +305,22 @@ full $ preprandial = c(0, 0.05)
 full $ setting   = c("pyrethroid",
                      "IG2_kibondo","IG2_kibondo_inf","IG2_kibondo_sup",
                      "PBO_BIT055", "PBO_BIT055_sup", "PBO_BIT055_inf",
+                     "PBO_BIT059", "PBO_BIT059_sup", "PBO_BIT059_inf",
                      "PBO_BIT103", "PBO_BIT103_sup", "PBO_BIT103_inf",
-                     "IG2_BIT103", "IG2_BIT103_sup", "IG2_BIT103_inf")
+                     "IG2_BIT103", "IG2_BIT103_sup", "IG2_BIT103_inf",
+                     "IG2_BIT080", "IG2_BIT080_sup", "IG2_BIT080_inf")
 full $ pop       = 10000
 ##' DHS 2017 for Mwanza province, effective coverage value
 ##' code by Katya and Rémi https://clintonhealth.box.com/s/02vk4o11ta7etymks0du8hbzsb925n69
 full$ EffCovconv = convert_cm(0.6155460)
 #full $ EIR_type = c("middle", "lower", "upper")
-full $ EIR = seq(20,80,2)
+full $ EIR = seq(10,200,2)
 
 full $ season = c("chirps")
 #' https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext#sec1
 #' Mosha 2022 page 1235
-full$fin = 4700/4973*.9 #90% indoor biting
-full$fout = 4700/4973*.1 #90% indoor biting
-full$gin = (4973-4700)/4973*.9 #90% indoor biting
-full$gout = (4973-4700)/4973*.1 #90% indoor biting
+full$fin = 4700/4973 
+full$gin = (4973-4700)/4973 
 
 #### 'scens' will do all possible combinations of those factors
 scens = expand.grid( full )
@@ -392,7 +371,8 @@ length(unique(scens$setting))
 
 setup_scenarios(scenarios=scens[1,])
 ## SLURM
-slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 1, qos = "30min", time = "00:10:00")
+slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 1, qos = "30min", time = "00:10:00", 
+                      rModule = "R/4.4.1-gfbf-2023b")
 #slurmCreateScenarios()
 check_scenarios_created(experiment_folder)
 
@@ -400,12 +380,12 @@ validateXML(xmlfile = file.path(experiment_folder, paste0("scenarios/", expName,
 
 ## Run Open Malaria
 ## SLURM
-slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1)
+slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1,
+                        rModule = "R/4.4.1-gfbf-2023b", 
+                        omModule = "OpenMalaria/44.0-intel-compilers-2023.1.0")
 #slurmRunSimulation()
 check_simulations_created(experiment_folder)
 
-# cluster_status(experiment_folder,  stime="13:30" )
-#
 # failed=read.table(file.path(experiment_folder, "missing_om_simulations.txt"))
 # failed$V2=gsub("_out.txt","", gsub(paste0(expName, "_"), "", failed$V1))
 # #
@@ -444,7 +424,8 @@ slurmPrepareResults(
   mem = "64G",
   nCPU = 1,
   time = "06:00:00",
-  qos = "6hours"
+  qos = "6hours", 
+  rModule = "R/4.4.1-gfbf-2023b"
 )
 #slurmRunResults()
 

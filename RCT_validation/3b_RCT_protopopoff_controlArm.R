@@ -20,9 +20,11 @@ SIMSTART <- "1918-01-01"
 ## openMalariaUtilities supports Open Malaria version 43 and up
 versionnum <- 44L
 
+
 source("helpfunctions_rct.R")
 source("helpfunction_omu_gvi.R")
 main_folder=(".")
+
 
 
 expName <- "RCT_protopopoff_calibration"
@@ -31,9 +33,8 @@ experimentDir <- paste0(main_folder,expName)
 experiment_folder=file.path(main_folder, expName)
 
 ## Define mosquitoes
-mosq <- c("arabiensis","funestus", "gambiae")#personal communication
-mosqs <- make_mosquito_name(mosq, inout = TRUE)
-contrib <- c("@ain@","@fin@", "@gin@","@aout@","@fout@","@gout@" )
+mosqs <- c("arabiensis_indoor","funestus_indoor", "gambiae_indoor")#personal communication
+contrib <- c("@ain@","@fin@", "@gin@" )
 cbind( mosqs, contrib)
 
 ## Basic skeleton
@@ -190,15 +191,16 @@ full $ setting   = c("pyrethroid")
 #c("pyrethroid","PBO_BIT055_briet", "PBO_BIT055_denz")
 full $ pop       = 10000
 full$ EffCovconv = convert_cm(0.3782992) #DHS 2016, effective coverage, code by Katya an Rémi
-full $ EIR = seq(50,300,2)
+full $ EIR = seq(10,200,2)
+#full $ preprandial = seq(0,1,0.05)
 full $ preprandial = seq(0,1,0.05)
 # species composition: personal communication
-full$ain = .046*.9 #90% indoor biting
-full$aout = .046*.1 #90% indoor biting
-full$fin = .038*.9 #90% indoor biting
-full$fout = .038*.1 #90% indoor biting
-full$gin = .916*.9 #90% indoor biting
-full$gout = .916*.1 #90% indoor biting
+full$ain = .04 
+#full$aout = .04*.1 #90% indoor biting
+full$fin = .04 
+#full$fout = .04*.1 #90% indoor biting
+full$gin = .92 
+#full$gout = .92*.1 #90% indoor biting
 full$season = c("chirps")
 full $ seasonLag = c("1m", "2m", "3m")
 
@@ -230,7 +232,8 @@ length(unique(scens$setting))
 ## Generate scenarios
 
 ## SLURM
-slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 1, qos = "30min", time = "00:30:00")
+slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 1, qos = "30min", time = "00:30:00", 
+                      rModule = "R/4.4.1-gfbf-2023b")
 #slurmCreateScenarios()
 check_scenarios_created(experiment_folder)
 
@@ -238,7 +241,9 @@ validateXML(xmlfile = file.path(experiment_folder, paste0("scenarios/", expName,
 
 ## Run Open Malaria
 ## SLURM
-slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1, qos = "6hours")
+slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1, qos = "6hours",
+                        rModule = "R/4.4.1-gfbf-2023b", 
+                        omModule = "OpenMalaria/44.0-intel-compilers-2023.1.0")
 # bSize: nb of simulations per job, and they run in parallel on the nCPUs
 # nCPUs if too high, hard to get the resources on scicore
 # old behaviour: bSize=1 and nCPU=1
@@ -280,7 +285,8 @@ slurmPrepareResults(
   mem = "64G",
   nCPU = 10,
   time = "06:00:00",
-  qos = "6hours"
+  qos = "6hours",
+  rModule = "R/4.4.1-gfbf-2023b"
 )
 #slurmRunResults()
 
@@ -405,4 +411,10 @@ simul_fit_seedavg=simul_fit%>%
 simul_fit_seedavg %>%
   ungroup()%>%
   group_by(seasonLag) %>%
+  dplyr::slice(which.max(llk))
+
+
+# best EIR for all
+simul_fit_seedavg %>%
+  ungroup()%>%
   dplyr::slice(which.max(llk))

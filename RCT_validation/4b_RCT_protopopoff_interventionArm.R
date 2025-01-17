@@ -1,3 +1,7 @@
+library(devtools)
+#devtools::install_github("SwissTPH/r-openMalariaUtilities",
+#                         ref = "master")
+#devtools::install("~/Git_repo/omuaddons") #run this if you have pulled in your local directory
 
 library(openMalariaUtilities)
 library(tidyverse)
@@ -18,19 +22,20 @@ SIMSTART <- "1918-01-01"
 versionnum <- 44L
 
 
+
 source("helpfunctions_rct.R")
 source("helpfunction_omu_gvi.R")
 main_folder=(".")
+parameters_GVI=read.csv(file.path(main_folder, "fitted_parameters_all_new_VCred.csv"))
 
-expName <- "RCT_protopopoff_validation_vDef"
+expName <- "RCT_protopopoff_validation"
 setwd(main_folder)
 experimentDir <- paste0(main_folder,expName)
 experiment_folder=file.path(main_folder, expName)
 
 ## Define mosquitoes
-mosq <- c("arabiensis","funestus", "gambiae")#personal communication
-mosqs <- make_mosquito_name(mosq, inout = TRUE)
-contrib <- c("@ain@","@fin@", "@gin@","@aout@","@fout@","@gout@" )
+mosqs <- c("arabiensis_indoor","funestus_indoor", "gambiae_indoor")#personal communication
+contrib <- c("@ain@","@fin@", "@gin@" )
 cbind( mosqs, contrib)
 
 ## Basic skeleton
@@ -85,6 +90,8 @@ baseList <- define_ITN(
 )
 
 exposure=.69
+halflife_PBO=2.4
+kappa_PBO=1.7
 
 histITN= create_vectorInterventionParameters(deterrency = 0,
                                                 preprandial =0.05,
@@ -100,43 +107,28 @@ futITN= create_vectorInterventionParameters(deterrency = 0,
                                                L=2.7, myname = "futITN", mosqs = mosqs)
 
 
-# we take the OlysetPlus parameterisation, as this is what is given in Mosha trial
-GVI_PBO_BIT055= create_vectorInterventionParameters_3decays(deterrency = 0.61,
-                                                            preprandial = 0.15,
-                                                            postprandial = 0.34,
-                                                            deterrency_inf = 0.45,
-                                                            preprandial_inf = 0.1,
-                                                            postprandial_inf = 0.1,
-                                                            deterrency_sup = 0.74,
-                                                            preprandial_sup = 0.19,
-                                                            postprandial_sup = 0.57,
 
-                                                            L_deterrency=1.6, kappa_deterrency=1.5,
-                                                            L_preprandial=1.2, kappa_preprandial=1.7,
-                                                            L_postprandial=1.5, kappa_postprandial=1.5, decay= "weibull",exposure_correction=exposure,  myname= "futPBO_BIT055", mosqs = mosqs)
+GVI_PBO_BIT055= extract_GVI_params(EHT="BIT055",
+                                   netType="Olyset Plus",
+                                   halflife_functionalSurvival=halflife_PBO, kappa_functionalSurvival=kappa_PBO,
+                                   exposure_correction=exposure, myname="futPBO_BIT055", mosqs=mosqs, parameters_GVI=parameters_GVI)
 
+GVI_PBO_BIT059= extract_GVI_params(EHT="BIT059",
+                                   netType="Olyset Plus",
+                                   halflife_functionalSurvival=halflife_PBO, kappa_functionalSurvival=kappa_PBO,
+                                   exposure_correction=exposure, myname="futPBO_BIT059", mosqs=mosqs, parameters_GVI=parameters_GVI)
 
-GVI_PBO_BIT103= create_vectorInterventionParameters_3decays(deterrency = 0.25,
-                                                            preprandial = 0.05,
-                                                            postprandial = 0.21,
-                                                            deterrency_inf = 0.01,
-                                                            preprandial_inf = 0,
-                                                            postprandial_inf = 0.01,
-                                                            deterrency_sup = 0.65,
-                                                            preprandial_sup = 0.13,
-                                                            postprandial_sup = 0.58,
-
-                                                            L_deterrency=2.4, kappa_deterrency=2.4,
-                                                            L_preprandial=1.2, kappa_preprandial=1.7,
-                                                            L_postprandial=2.1, kappa_postprandial=1.6, decay= "weibull",exposure_correction=exposure,  myname= "futPBO_BIT103",mosqs = mosqs)
-
-
+GVI_PBO_BIT103= extract_GVI_params(EHT="BIT103",
+                                   netType="Olyset Plus",
+                                   halflife_functionalSurvival=halflife_PBO, kappa_functionalSurvival=kappa_PBO,
+                                   exposure_correction=exposure, myname="futPBO_BIT103", mosqs=mosqs,  parameters_GVI=parameters_GVI)
 
 
 list_GVI_snippets=list(histITN, futITN)
 
 list_GVI_snippets=append(list_GVI_snippets, GVI_PBO_BIT103)
 list_GVI_snippets=append(list_GVI_snippets, GVI_PBO_BIT055)
+list_GVI_snippets=append(list_GVI_snippets, GVI_PBO_BIT059)
 
 for(GVI_param in list_GVI_snippets){
   baseList= defineGVI_simple(baseList = baseList,
@@ -173,6 +165,7 @@ baseList <- deploy_it_compat(
 
 ## Future IG2
 list_GVI_snippets_id=c("futPBO_BIT055","futPBO_BIT055_sup","futPBO_BIT055_inf",
+                       "futPBO_BIT059","futPBO_BIT059_sup","futPBO_BIT059_inf",
                        "futPBO_BIT103","futPBO_BIT103_sup","futPBO_BIT103_inf")
 
 
@@ -249,19 +242,18 @@ names(seasonality_full)=c("m4", "m5", "m6","m7","m8","m9" ,"m10", "m11", "m12", 
 ##-- creating the experiment
 full             = list()
 full $ seed      = 1:10
-full $ setting   = c("pyrethroid","PBO_BIT055","PBO_BIT055_sup","PBO_BIT055_inf",
+full $ setting   = c("pyrethroid",
+                     "PBO_BIT055","PBO_BIT055_sup","PBO_BIT055_inf",
+                     "PBO_BIT059","PBO_BIT059_sup","PBO_BIT059_inf",
                      "PBO_BIT103","PBO_BIT103_sup","PBO_BIT103_inf" )
 #c("pyrethroid","PBO_BIT055_briet", "PBO_BIT055_denz")
 full $ pop       = 10000
 full$ EffCovconv = convert_cm(0.3782992) #DHS 2016, effective coverage, code by Katya an Rémi
-full $ EIR =seq(40,300,2)
+full $ EIR =seq(10,200,2)
 # species composition: personal communication
-full$ain = .046*.9 #90% indoor biting
-full$aout = .046*.1 #90% indoor biting
-full$fin = .038*.9 #90% indoor biting
-full$fout = .038*.1 #90% indoor biting
-full$gin = .916*.9 #90% indoor biting
-full$gout = .916*.1 #90% indoor biting
+full$ain = .04 
+full$fin = .04 
+full$gin = .92 
 full$season = c("chirps")
 
 #### 'scens' will do all possible combinations of those factors
@@ -306,14 +298,17 @@ length(unique(scens$setting))
 ## Generate scenarios
 
 ## SLURM
-slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 1, qos = "30min", time = "00:30:00")
+slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 1, qos = "30min", time = "00:30:00", 
+                      rModule = "R/4.4.1-gfbf-2023b")
 #slurmCreateScenarios()
 check_scenarios_created(experiment_folder)
 
 validateXML(xmlfile = file.path(experiment_folder, paste0("scenarios/", expName, "_7.xml")), schema = NULL, scenarios = scens)
 ## Run Open Malaria
 ## SLURM
-slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1, qos = "6hours")
+slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1, qos = "6hours",
+                        rModule = "R/4.4.1-gfbf-2023b", 
+                        omModule = "OpenMalaria/44.0-intel-compilers-2023.1.0")
 
 #slurmRunSimulation()
 check_simulations_created(experiment_folder)
@@ -353,7 +348,8 @@ slurmPrepareResults(
   mem = "32G",
   nCPU = 10,
   time = "06:00:00",
-  qos = "6hours"
+  qos = "6hours", 
+  rModule = "R/4.4.1-gfbf-2023b"
 )
 #slurmRunResults()
 
@@ -404,12 +400,12 @@ agePR="0.5-14"
 
 #'Table 1 Protopopoff 2018 https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(18)30427-6/fulltext
 #'timing: Figure 1
-fitdat = data.frame(setting=c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT103")
+fitdat = data.frame(setting=c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT103","OlysetPlus_BIT059")
                     ,age="0.5-14"
                     ,year=2014
                     ,month=9
-                    ,pos_children=c(600,606, 606)
-                    ,nb_children=c(885,991, 991)) %>%
+                    ,pos_children=c(600,606, 606, 606)
+                    ,nb_children=c(885,991, 991, 991)) %>%
   rowwise() %>%
   mutate(PR_obs=pos_children/nb_children,
          sd=sqrt(PR_obs*(1-PR_obs)/nb_children),
@@ -423,18 +419,20 @@ fitdat = data.frame(setting=c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT1
 ## validat
 ######################
 
-setting=c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT103")
+setting=c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT103", "OlysetPlus_BIT059")
 #' Protopopoff et al. 2018 https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(18)30427-6/fulltext
 #' Figure 1 for timing and Table 2 for numbers
-validat = data.frame(setting=rep(c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT103"),each=6)
+validat = data.frame(setting=rep(c("Pyrethroid", "OlysetPlus_BIT055","OlysetPlus_BIT103","OlysetPlus_BIT059"),each=6)
                      ,age="0.5-14"
-                     ,year=rep(c(2015,2015,2016,2016, 2017, 2017),3)
-                     ,month=rep(c(6,11,6,11, 6, 11),3)
+                     ,year=rep(c(2015,2015,2016,2016, 2017, 2017),4)
+                     ,month=rep(c(6,11,6,11, 6, 11),4)
                      ,pos_children=c(553,515,548,710, 1643, 1045,
+                                     445,275,342,440,1280,901,
                                      445,275,342,440,1280,901,
                                      445,275,342,440,1280,901
                      )
                      ,nb_children=c(997,932,1034,1044,2032,1784,
+                                    971,883,984,958,1848,1807,
                                     971,883,984,958,1848,1807,
                                     971,883,984,958,1848,1807
                      )
@@ -483,16 +481,16 @@ validat_plot=validat%>% filter(setting!="Pyrethroid" | PR_obs>0.8)
 seed_avg_pooledModels= final_output$simul_calib %>%
   mutate(sup=str_detect( setting, pattern = ("_sup")),
          inf=str_detect( setting, pattern = ("_inf")),
-         setting=gsub("_inf", "", gsub("_sup", "", gsub("_BIT055", "", gsub("_BIT103", "", setting)))))%>%
+         setting=gsub("_inf", "", gsub("_sup", "", gsub("_BIT055", "", gsub("_BIT103", "", gsub("_BIT059", "", setting))))))%>%
   group_by(setting, year, month, age)%>%
   summarise(PR_mini=min(PR_mini), PR_maxi=max(PR_maxi), PR_middle=mean(PR_middle[sup==FALSE & inf==FALSE]))
 
 fitdat_pooledAll= fitdat %>%
-  mutate(setting=gsub("_briet", "", gsub("_denz", "", gsub("_BIT055", "", gsub("_BIT103", "", setting)))))%>%
+  mutate(setting=gsub("_briet", "", gsub("_denz", "", gsub("_BIT055", "", gsub("_BIT103", "", gsub("_BIT059", "", setting))))))%>%
   unique()
 
 validat_pooledAll= validat %>%
-  mutate(setting=gsub("_briet", "", gsub("_denz", "", gsub("_BIT055", "", gsub("_BIT103", "", setting)))))%>%
+  mutate(setting=gsub("_briet", "", gsub("_denz", "", gsub("_BIT055", "", gsub("_BIT103", "", gsub("_BIT059", "", setting))))))%>%
   unique()
 
 fitdat_pooledAll=fitdat_pooledAll%>% full_join(validat_pooledAll %>% filter(setting=="Pyrethroid" & PR_obs<0.8))
@@ -503,3 +501,4 @@ write.csv(fitdat_pooledAll %>% select(-arm)%>% unique(), file = file.path(experi
 write.csv(validat_pooledAll, file = file.path(experiment_folder, "validat_protopopoff.csv"), row.names = F)
 write.csv(seed_avg_pooledModels, file = file.path(experiment_folder, "results_protopopoff.csv"), row.names = F)
 write.csv(final_output$seed_avg, file = file.path(experiment_folder, "results_protopopoff_detail.csv"), row.names = F)
+

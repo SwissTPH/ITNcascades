@@ -32,15 +32,12 @@ experiment_folder=file.path(main_folder, expName)
 ###
 
 # which mosquitoes will be used ?
-mosq  = c("funestus","gambiaesl")
+mosqs  = c("funestus_indoor","gambiaesl_indoor")
 #' Mosha 2022 https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext#sec1
 #' page 1235
 
-# include 'indoor' and 'outdoor' versions?
-mosqs = make_mosquito_name( mosq, inout = T)
-
 # contrib: the relative contribution of each 'mosquito' to EIR
-contrib = c("@fin@", "@gin@","@fout@","@gout@" )
+contrib = c("@fin@", "@gin@")
 cbind( mosqs, contrib)
 
 ###----------------------------------------------------
@@ -209,17 +206,15 @@ full $ pop       = 10000
 ##' DHS 2017 for Mwanza province, effective coverage value
 ##' code by Katya and Rémi https://clintonhealth.box.com/s/02vk4o11ta7etymks0du8hbzsb925n69
 full$ EffCovconv = convert_cm(0.6155460)
-full $ EIR = seq(50,300,2)
+full $ EIR = seq(10,200,2)
 full $ preprandial = seq(0,1,0.05)
 
 full $ season = c("chirps")
 full $ seasonLag = c("1m", "2m", "3m")
 #' https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext#sec1
 #' Mosha 2022 page 1235
-full$fin = 4700/4973*.9 #90% indoor biting
-full$fout = 4700/4973*.1 #90% indoor biting
-full$gin = (4973-4700)/4973*.9 #90% indoor biting
-full$gout = (4973-4700)/4973*.1 #90% indoor biting
+full$fin = 4700/4973*1 #90% indoor biting
+full$gin = (4973-4700)/4973*1 #90% indoor biting
 
 #### 'scens' will do all possible combinations of those factors
 scens = expand.grid( full )
@@ -245,7 +240,8 @@ length(unique(scens$setting))
 
 ## SLURM
 setup_scenarios(scenarios=scens[1,])
-slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 8, qos = "30min", time = "00:10:00")
+slurmPrepareScenarios(expName = expName, scenarios = scens, nCPU = 8, qos = "30min", time = "00:10:00", 
+                      rModule = "R/4.4.1-gfbf-2023b")
 #slurmCreateScenarios()
 check_scenarios_created(experiment_folder)
 
@@ -257,7 +253,9 @@ validateXML(xmlfile = file.path(experiment_folder, paste0("scenarios/", expName,
 ## SLURM
 ## Run Open Malaria
 ## SLURM
-slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1)
+slurmPrepareSimulations(expName = expName, scenarios = scens, nCPU = 1, bSize = 1,
+                        rModule = "R/4.4.1-gfbf-2023b", 
+                        omModule = "OpenMalaria/44.0-intel-compilers-2023.1.0")
 #slurmRunSimulation()
 check_simulations_created(experiment_folder)
 
@@ -297,7 +295,8 @@ slurmPrepareResults(
   mem = "64G",
   nCPU = 1,
   time = "06:00:00",
-  qos = "6hours"
+  qos = "6hours",
+  rModule = "R/4.4.1-gfbf-2023b"
 )
 #
 
@@ -419,7 +418,13 @@ simul_fit_seedavg %>%
 
 # best EIR for all
 simul_fit_seedavg %>%
-  filter(preprandial>0)%>%
   ungroup()%>%
-  group_by(seasonLag) %>%
+  dplyr::slice(which.max(llk))
+
+
+
+# best EIR for all
+simul_fit_seedavg %>%
+  ungroup()%>%
+  filter(preprandial>0)%>%
   dplyr::slice(which.max(llk))
