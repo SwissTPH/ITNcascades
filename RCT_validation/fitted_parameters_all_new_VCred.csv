@@ -1,0 +1,25 @@
+"netType","EHT","parameter","mean_Washed","mean_Unwashed","q025_Washed","q025_Unwashed","q975_Washed","q975_Unwashed","halflife_insecticide"
+"Interceptor G2","Kibondo","Post-prandial killing effect",0.25,0.35,0.03,0.04,0.48,0.64,10.5
+"Interceptor G2","Kibondo","Pre-prandial killing effect",0.21,0.24,0.15,0.16,0.27,0.31,24
+"Interceptor G2","Kibondo","Reduction in host availability",0.11,0.15,0,0.01,0.33,0.41,11.25
+"Olyset Plus","BIT055","Post-prandial killing effect",0.13,0.44,0.01,0.18,0.29,0.67,4.25806451612903
+"Olyset Plus","BIT055","Pre-prandial killing effect",0,0.14,0,0.08,0.02,0.19,3
+"Olyset Plus","BIT055","Reduction in host availability",0.13,0.48,0.01,0.23,0.32,0.67,4.11428571428571
+"Olyset Plus","Odufuwa","Post-prandial killing effect",0.29,0.39,0.17,0.23,0.41,0.55,11.7
+"Olyset Plus","Odufuwa","Pre-prandial killing effect",0.05,0.22,0.01,0.19,0.08,0.25,3.88235294117647
+"Olyset Plus","Odufuwa","Reduction in host availability",0.58,0.64,0.46,0.51,0.69,0.75,32
+"Interceptor G2","BIT080","Post-prandial killing effect",0.23,0.08,0.11,0,0.36,0.23,-1.6
+"Interceptor G2","BIT080","Pre-prandial killing effect",0.09,0.23,0.06,0.19,0.12,0.28,4.92857142857143
+"Interceptor G2","BIT080","Reduction in host availability",0.05,0.13,0,0,0.16,0.35,4.875
+"Olyset Plus","BIT103","Post-prandial killing effect",0.17,0.2,0.01,0.01,0.51,0.57,20
+"Interceptor G2","BIT103","Post-prandial killing effect",0.16,0.24,0.01,0.01,0.41,0.59,9
+"Olyset Plus","BIT103","Pre-prandial killing effect",0,0,0,0,0.02,0.02,NA
+"Interceptor G2","BIT103","Pre-prandial killing effect",0.01,0.2,0,0.12,0.05,0.28,3.15789473684211
+"Olyset Plus","BIT103","Reduction in host availability",0.42,0.26,0.03,0.01,0.82,0.66,-4.875
+"Interceptor G2","BIT103","Reduction in host availability",0.07,0.19,0,0.01,0.23,0.55,4.75
+"Olyset Plus","BIT055","Reduction in vectorial capacity",0.57,0.91,0.33,0.83,0.77,0.95,8.02941176470588
+"Interceptor G2","BIT080","Reduction in vectorial capacity",0.78,0.81,0.66,0.73,0.86,0.88,80.9999999999999
+"Interceptor G2","BIT103","Reduction in vectorial capacity",0.6,0.85,0.29,0.72,0.85,0.95,10.2
+"Olyset Plus","BIT103","Reduction in vectorial capacity",0.71,0.67,0.38,0.34,0.9,0.92,-50.25
+"Interceptor G2","Kibondo","Reduction in vectorial capacity",0.86,0.9,0.74,0.79,0.93,0.96,67.4999999999999
+"Olyset Plus","Odufuwa","Reduction in vectorial capacity",0.85,0.91,0.8,0.89,0.89,0.93,45.4999999999999
