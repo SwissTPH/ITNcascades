@@ -1,0 +1,97 @@
+"netType","EHT","parameter","mean_Washed","mean_Unwashed","q025_Washed","q025_Unwashed","q975_Washed","q975_Unwashed","halflife_insecticide"
+"Pyrethroid-only","Kibondo et al. 2022","Post-prandial killing effect",0.15,0.25,0.03,0.05,0.28,0.49,7.5
+"Interceptor G2","Kibondo et al. 2022","Post-prandial killing effect",0.43,0.52,0.29,0.3,0.58,0.72,17.3333333333333
+"Pyrethroid-only","Kibondo et al. 2022","Pre-prandial killing effect",0.25,0.25,0.21,0.2,0.28,0.3,Inf
+"Interceptor G2","Kibondo et al. 2022","Pre-prandial killing effect",0.41,0.43,0.38,0.39,0.45,0.48,64.4999999999999
+"Pyrethroid-only","Kibondo et al. 2022","Reduction in host availability",0.76,0.78,0.67,0.64,0.83,0.87,117
+"Interceptor G2","Kibondo et al. 2022","Reduction in host availability",0.69,0.69,0.57,0.52,0.78,0.81,Inf
+"Pyrethroid-only","BIT055","Post-prandial killing effect",0.18,0.24,0.1,0.13,0.27,0.36,12
+"Olyset Plus","BIT055","Post-prandial killing effect",0.32,0.58,0.22,0.41,0.43,0.75,6.69230769230769
+"Pyrethroid-only","BIT055","Pre-prandial killing effect",0.27,0.35,0.24,0.33,0.29,0.38,13.125
+"Olyset Plus","BIT055","Pre-prandial killing effect",0.3,0.45,0.28,0.42,0.33,0.47,9
+"Pyrethroid-only","BIT055","Reduction in host availability",0.71,0.78,0.65,0.72,0.77,0.83,33.4285714285714
+"Olyset Plus","BIT055","Reduction in host availability",0.79,0.89,0.73,0.84,0.83,0.92,26.7
+"Pyrethroid-only","Odufuwa et al. 2024","Post-prandial killing effect",0.2,0.04,0.12,0,0.28,0.1,-0.75
+"Olyset Plus","Odufuwa et al. 2024","Post-prandial killing effect",0.31,0.41,0.19,0.25,0.43,0.56,12.3
+"Pyrethroid-only","Odufuwa et al. 2024","Pre-prandial killing effect",0.19,0.19,0.17,0.17,0.21,0.22,Inf
+"Olyset Plus","Odufuwa et al. 2024","Pre-prandial killing effect",0.23,0.37,0.21,0.35,0.26,0.39,7.92857142857143
+"Pyrethroid-only","Odufuwa et al. 2024","Reduction in host availability",0.64,0.59,0.55,0.49,0.71,0.69,-35.4
+"Olyset Plus","Odufuwa et al. 2024","Reduction in host availability",0.83,0.86,0.78,0.8,0.87,0.9,85.9999999999998
+"Pyrethroid-only","BIT080","Post-prandial killing effect",0.34,0.15,0.27,0.09,0.42,0.22,-2.36842105263158
+"Interceptor G2","BIT080","Post-prandial killing effect",0.35,0.18,0.26,0.07,0.45,0.32,-3.17647058823529
+"Pyrethroid-only","BIT080","Pre-prandial killing effect",0.25,0.27,0.24,0.26,0.27,0.29,40.4999999999999
+"Interceptor G2","BIT080","Pre-prandial killing effect",0.34,0.44,0.32,0.41,0.36,0.47,13.2
+"Pyrethroid-only","BIT080","Reduction in host availability",0.34,0.49,0.2,0.39,0.45,0.59,9.8
+"Interceptor G2","BIT080","Reduction in host availability",0.34,0.45,0.18,0.22,0.48,0.63,12.2727272727273
+"Pyrethroid-only","Assenga et al. 2025","Post-prandial killing effect",0.06,0.16,0.01,0.06,0.13,0.3,4.8
+"Olyset Plus","Assenga et al. 2025","Post-prandial killing effect",0.27,0.23,0.14,0.07,0.43,0.44,-17.25
+"Interceptor G2","Assenga et al. 2025","Post-prandial killing effect",0.25,0.14,0.18,0.05,0.34,0.26,-3.81818181818182
+"Pyrethroid-only","Assenga et al. 2025","Pre-prandial killing effect",0.28,0.36,0.26,0.34,0.31,0.38,13.5
+"Olyset Plus","Assenga et al. 2025","Pre-prandial killing effect",0.32,0.34,0.29,0.31,0.35,0.37,51
+"Interceptor G2","Assenga et al. 2025","Pre-prandial killing effect",0.3,0.45,0.27,0.41,0.32,0.48,9
+"Pyrethroid-only","Assenga et al. 2025","Reduction in host availability",0.75,0.82,0.68,0.75,0.82,0.88,35.1428571428572
+"Olyset Plus","Assenga et al. 2025","Reduction in host availability",0.75,0.81,0.65,0.7,0.83,0.89,40.4999999999999
+"Interceptor G2","Assenga et al. 2025","Reduction in host availability",0.33,0.54,0.17,0.39,0.46,0.67,7.71428571428571
+"Pyrethroid-only","Assenga et al. 2025, CI","Post-prandial killing effect",0.19,0.31,0.13,0.23,0.26,0.38,7.75
+"Olyset Plus","Assenga et al. 2025, CI","Post-prandial killing effect",0.28,0.52,0.22,0.38,0.34,0.65,6.5
+"Interceptor G2","Assenga et al. 2025, CI","Post-prandial killing effect",0.56,0.76,0.49,0.66,0.62,0.84,11.4
+"Pyrethroid-only","Assenga et al. 2025, CI","Pre-prandial killing effect",0.2,0.2,0.17,0.16,0.24,0.24,Inf
+"Olyset Plus","Assenga et al. 2025, CI","Pre-prandial killing effect",0.18,0.31,0.15,0.27,0.21,0.36,7.15384615384615
+"Interceptor G2","Assenga et al. 2025, CI","Pre-prandial killing effect",0.57,0.64,0.54,0.59,0.61,0.68,27.4285714285714
+"Pyrethroid-only","Assenga et al. 2025, CI","Reduction in host availability",0.61,0.48,0.53,0.38,0.68,0.57,-11.0769230769231
+"Olyset Plus","Assenga et al. 2025, CI","Reduction in host availability",0.48,0.81,0.39,0.75,0.56,0.86,7.36363636363636
+"Interceptor G2","Assenga et al. 2025, CI","Reduction in host availability",0.06,0.46,0,0.33,0.17,0.58,3.45
+"Pyrethroid-only","Martin et al. 2024","Post-prandial killing effect",0.08,0.06,0,0,0.26,0.22,-9
+"Olyset Plus","Martin et al. 2024","Post-prandial killing effect",0.08,0.42,0,0.11,0.26,0.74,3.70588235294118
+"Interceptor G2","Martin et al. 2024","Post-prandial killing effect",0.2,0.42,0.01,0.19,0.51,0.66,5.72727272727273
+"Pyrethroid-only","Martin et al. 2024","Pre-prandial killing effect",0.11,0.05,0.01,0,0.24,0.14,-2.5
+"Olyset Plus","Martin et al. 2024","Pre-prandial killing effect",0.18,0.47,0.09,0.34,0.3,0.59,4.86206896551724
+"Interceptor G2","Martin et al. 2024","Pre-prandial killing effect",0.05,0.42,0,0.3,0.15,0.55,3.40540540540541
+"Pyrethroid-only","Martin et al. 2024","Reduction in host availability",0.27,0.44,0.02,0.09,0.6,0.69,7.76470588235294
+"Olyset Plus","Martin et al. 2024","Reduction in host availability",0.47,0.53,0.13,0.14,0.73,0.81,26.5
+"Interceptor G2","Martin et al. 2024","Reduction in host availability",0.62,0.18,0.28,0.01,0.85,0.48,-1.22727272727273
+"Pyrethroid-only","Martin et al. 2024, f","Post-prandial killing effect",0.13,0.16,0,0.01,0.41,0.43,16
+"Olyset Plus","Martin et al. 2024, f","Post-prandial killing effect",0.08,0.18,0,0.01,0.26,0.48,5.4
+"Interceptor G2","Martin et al. 2024, f","Post-prandial killing effect",0.11,0.48,0,0.15,0.36,0.8,3.89189189189189
+"Pyrethroid-only","Martin et al. 2024, f","Pre-prandial killing effect",0.05,0.1,0.01,0,0.18,0.24,6
+"Olyset Plus","Martin et al. 2024, f","Pre-prandial killing effect",0.05,0.32,0,0.19,0.16,0.46,3.55555555555556
+"Interceptor G2","Martin et al. 2024, f","Pre-prandial killing effect",0.1,0.44,0.01,0.27,0.25,0.61,3.88235294117647
+"Pyrethroid-only","Martin et al. 2024, f","Reduction in host availability",0.62,0.33,0.25,0.02,0.87,0.68,-3.41379310344828
+"Olyset Plus","Martin et al. 2024, f","Reduction in host availability",0.42,0.48,0.06,0.09,0.72,0.78,24
+"Interceptor G2","Martin et al. 2024, f","Reduction in host availability",0.47,0.4,0.08,0.04,0.79,0.77,-17.1428571428572
+"Interceptor G2","Sovegnon et al. 2024, 2","Post-prandial killing effect",0.47,0.6,0.2,0.36,0.72,0.81,13.8461538461538
+"Interceptor G2","Sovegnon et al. 2024, 2","Pre-prandial killing effect",0.47,0.63,0.28,0.49,0.64,0.75,11.8125
+"Interceptor G2","Sovegnon et al. 2024, 2","Reduction in host availability",0.36,0.26,0.04,0.01,0.67,0.57,-7.8
+"Pyrethroid-only","Sovegnon et al. 2024, 1","Post-prandial killing effect",0.07,0.05,0,0,0.18,0.15,-7.5
+"Pyrethroid-only","Sovegnon et al. 2024, 1","Pre-prandial killing effect",0.39,0.24,0.25,0.07,0.51,0.38,-4.8
+"Pyrethroid-only","Sovegnon et al. 2024, 1","Reduction in host availability",0.11,0.07,0,0,0.3,0.22,-5.25
+"Pyrethroid-only","Nguessan et al. 2016","Post-prandial killing effect",0.05,0.06,0.03,0.03,0.08,0.11,18
+"Interceptor G2","Nguessan et al. 2016","Post-prandial killing effect",0.47,0.47,0.4,0.4,0.53,0.55,Inf
+"Pyrethroid-only","Nguessan et al. 2016","Pre-prandial killing effect",0.09,0.16,0.06,0.13,0.12,0.2,6.85714285714286
+"Interceptor G2","Nguessan et al. 2016","Pre-prandial killing effect",0.45,0.54,0.42,0.5,0.49,0.58,18
+"Pyrethroid-only","Nguessan et al. 2016","Reduction in host availability",0.53,0.67,0.46,0.6,0.6,0.73,14.3571428571429
+"Interceptor G2","Nguessan et al. 2016","Reduction in host availability",0.44,0.51,0.34,0.41,0.52,0.59,21.8571428571429
+"Interceptor G2","Assenga et al. 2025","Entomological efficacy",0.89,0.91,0.87,0.9,0.91,0.93,136.5
+"Olyset Plus","Assenga et al. 2025","Entomological efficacy",0.91,0.91,0.89,0.89,0.92,0.92,Inf
+"Pyrethroid-only","Assenga et al. 2025","Entomological efficacy",0.88,0.91,0.86,0.9,0.89,0.91,91
+"Interceptor G2","Assenga et al. 2025, CI","Entomological efficacy",0.98,0.97,0.97,0.97,0.98,0.98,-291.000000000001
+"Olyset Plus","Assenga et al. 2025, CI","Entomological efficacy",0.86,0.92,0.83,0.91,0.88,0.93,46
+"Pyrethroid-only","Assenga et al. 2025, CI","Entomological efficacy",0.86,0.87,0.83,0.85,0.88,0.9,261
+"Olyset Plus","BIT055","Entomological efficacy",0.91,0.93,0.9,0.92,0.92,0.93,139.5
+"Pyrethroid-only","BIT055","Entomological efficacy",0.89,0.91,0.87,0.9,0.9,0.92,136.5
+"Interceptor G2","BIT080","Entomological efficacy",0.92,0.92,0.91,0.9,0.94,0.94,Inf
+"Pyrethroid-only","BIT080","Entomological efficacy",0.9,0.86,0.88,0.84,0.91,0.88,-64.4999999999999
+"Interceptor G2","Kibondo et al. 2022","Entomological efficacy",0.93,0.94,0.92,0.92,0.94,0.95,282.000000000004
+"Pyrethroid-only","Kibondo et al. 2022","Entomological efficacy",0.88,0.9,0.86,0.86,0.9,0.92,135
+"Interceptor G2","Martin et al. 2024","Entomological efficacy",0.8,0.95,0.6,0.91,0.9,0.97,19
+"Olyset Plus","Martin et al. 2024","Entomological efficacy",0.78,0.94,0.61,0.91,0.88,0.97,17.625
+"Pyrethroid-only","Martin et al. 2024","Entomological efficacy",0.64,0.63,0.34,0.35,0.84,0.81,-189.000000000001
+"Interceptor G2","Martin et al. 2024, f","Entomological efficacy",0.63,0.95,0.31,0.89,0.83,0.98,8.90625
+"Olyset Plus","Martin et al. 2024, f","Entomological efficacy",0.63,0.88,0.31,0.79,0.83,0.94,10.56
+"Pyrethroid-only","Martin et al. 2024, f","Entomological efficacy",0.77,0.71,0.52,0.39,0.89,0.89,-35.5
+"Interceptor G2","Nguessan et al. 2016","Entomological efficacy",0.95,0.96,0.94,0.95,0.96,0.96,288.000000000001
+"Pyrethroid-only","Nguessan et al. 2016","Entomological efficacy",0.72,0.82,0.67,0.79,0.76,0.85,24.6
+"Olyset Plus","Odufuwa et al. 2024","Entomological efficacy",0.9,0.92,0.89,0.91,0.91,0.93,138
+"Pyrethroid-only","Odufuwa et al. 2024","Entomological efficacy",0.86,0.81,0.84,0.77,0.88,0.84,-48.6000000000001
+"Interceptor G2","Sovegnon et al. 2024, 2","Entomological efficacy",0.95,0.98,0.91,0.96,0.98,0.99,97.9999999999999
+"Pyrethroid-only","Sovegnon et al. 2024, 1","Entomological efficacy",0.87,0.73,0.78,0.42,0.93,0.88,-15.6428571428571

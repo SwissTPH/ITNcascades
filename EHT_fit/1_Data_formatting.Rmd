@@ -1,0 +1,674 @@
+---
+title: "Data formatting EHT"
+output:
+  word_document: default
+html_document: default
+date: "2024-11-26"
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set( results='hide')
+
+rm(list=ls())
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(stringr)
+library(tidyr)
+library(gt)
+library(haven)
+
+mainDir="."
+
+plotDir=file.path(mainDir, "plots")
+dataDir=file.path(mainDir, "raw_data")
+
+scriptDir=file.path(".","EHT_fit")
+outputsDir=file.path(scriptDir, "processed_data")
+
+```
+
+# Data processing
+## Kibondo et al. 2022
+
+Import dataset and select main variables
+```{r,  results='hide' }
+data_kibondo_0<-read_excel(file.path(dataDir,"G2expermentalhutdata_21dec2022_kibondo2022Hut.xlsx"), sheet=1)
+
+data_kibondo=data_kibondo_0 %>%
+  filter(specie=="arabiensis",  timeperiod %in% c(24, 72)) %>%
+  rename(UA=(unfedalive), FA=(fedalive), UD=(unfeddead), FD=(feddead), insecticide_name=lntype) %>%
+  mutate(treatment=ifelse(nettype %in% c("Unw Inter", "Washed Inter"), 1,
+                          ifelse( nettype %in% c("Unw InterG2", "Washed IntrG2"), 2, 
+                                  ifelse( nettype %in% c("Control"), 0, NA))),
+         wash_status=ifelse(nettype %in% c("Control"), "Control", wash_status),
+         total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD,
+  )%>%
+  select(studyday, timeperiod, wash_status, insecticide_name, treatment,  UA, UD, FA, FD, dead, fed, total)
+```
+
+Save file.
+```{r,  results='hide'  }
+
+write.csv(data_kibondo %>% filter(timeperiod==72), file = file.path(outputsDir, "kibondo_72.csv"), row.names = F)
+write.csv(data_kibondo  %>% filter(timeperiod==24), file = file.path(outputsDir, "kibondo_24.csv"), row.names = F)
+
+```
+
+
+## Assenga et al.
+Import dataset, rename and select main variables
+
+```{r  warning=FALSE ,  results='hide'}
+data_bit103_0<-read_excel(file.path(dataDir,"BIT103_All_Data_AAA_II.xlsx"), sheet="EH_ALL_DATA")
+data_bit103_collapsed<-read_excel(file.path(dataDir,"BIT103_All_Data_AAA_II.xlsx"), sheet="EH_All_Data_Collapsed")
+
+netcodes_103=data_bit103_collapsed%>% select(netcode, arm, Nettype, wash, ITN)%>%
+  rename(test_item_number=netcode)%>% unique()
+
+huttypes=data_bit103_collapsed%>% select(HutType, hut_number)%>%
+  unique()
+
+#Magnet: 81 and 82 (unwashed and washed)
+#OlysetPlus: 81 and 82 (unwashed and washed)
+#Magnet: 61 and 62 (unwashed and washed)
+#IG2: 71 and 72 (unwashed and washed)
+# control : 50
+
+data_bit103=data_bit103_0%>%
+  ungroup()%>%
+  select(-study_director, - project_name, -entered_by, -trap_id, -trap_name, -total_number_of_huts, -mosquitoes_strain_id, -serial_number)%>%
+  group_by(day, test_item_number, date_test,hut_number, sleeper, mosquitoes_strain_name )%>%
+  summarise_all(list(sum))%>%
+  ungroup()%>%
+  merge(netcodes_103)%>% 
+  filter(ITN %in% c("Control", "MagNet_ITN", "Olyset_Plus", "Interceptor_G2"))%>% 
+  mutate(treatment=ifelse(ITN=="MagNet_ITN", 1,
+                          ifelse(ITN=="Olyset_Plus", 2,
+                                 ifelse( ITN=="Interceptor_G2", 3, 
+                                         ifelse( ITN=="Control", 0, NA)))), 
+         wash=ifelse(ITN %in% c("Control"), "Control", wash),
+         insecticide_name=ITN, wash_status=as.character(wash))
+
+names(data_bit103)=gsub("amekula_", "F", gsub("hajala_", "U",
+                                              gsub("amekufa", "D",
+                                                   gsub("wazima", "A", names(data_bit103)))))
+
+```
+
+Separate file per time period
+
+```{r }
+data_bit103_all_72=data_bit103 %>%
+  filter(mosquitoes_strain_name=="Anopheles gambiae s.l") %>%
+  rename(UD_12=UD, UA_12=UA, FA_12=FA, FD_12=FD)%>%
+  mutate(UA=UA_72,
+         FA=FA_72,
+         UD= UD_72,
+         FD=FD_72,
+         total=UA+UD+FA+FD, fed=FA+FD, dead=FD+UD
+  )%>%
+  select(day, wash_status, insecticide_name, treatment,UA, UD, FA, FD, dead, fed, total)
+
+
+data_bit103_all_24=data_bit103 %>%
+  filter(mosquitoes_strain_name=="Anopheles gambiae s.l") %>%
+  rename(UD_12=UD, UA_12=UA, FA_12=FA, FD_12=FD)%>%
+  mutate(UA=UA_24,
+         FA=FA_24,
+         UD= UD_24,
+         FD=FD_24,
+         total=UA+UD+FA+FD, fed=FA+FD, dead=FD+UD
+  )%>%
+  select(day, wash_status, insecticide_name, treatment,UA, UD, FA, FD, dead, fed, total)
+
+```
+
+
+Save files
+
+```{r ,  results='hide' , warning=FALSE}
+
+write.csv(data_bit103_all_72, file = file.path(outputsDir, "assenga_all_72.csv"), row.names = F)
+write.csv(data_bit103_all_24, file = file.path(outputsDir, "assenga_all_24.csv"), row.names = F)
+
+
+```
+
+## Assenga et al., Cote d'Ivoire
+Import dataset, rename and select main variables
+
+```{r  warning=FALSE ,  results='hide'}
+data_103_CI_unwashed<-read_excel(file.path(dataDir,"Rawdata_Hut Phase 2 An gambiae.xlsx"), sheet="72h_NL_Agamb")
+data_103_CI_washed<-read_excel(file.path(dataDir,"Rawdata_Hut Phase 2 An gambiae.xlsx"), sheet="72h_L20_Agamb")
+
+
+data_103_CI_unwashed_24<-read_excel(file.path(dataDir,"Rawdata_Hut Phase 2 An gambiae.xlsx"), sheet="24h_NL_Agamb")
+data_103_CI_washed_24<-read_excel(file.path(dataDir,"Rawdata_Hut Phase 2 An gambiae.xlsx"), sheet="24h_L20_Agamb")
+
+unique(data_103_CI_unwashed$treat)
+table(data_103_CI_washed$treat)
+
+netcodes_NL=data.frame(treat=c("EMP-CTRL-NL","0104112022-NL", "0119052023-NL", "0112062023-NL"),
+           insecticide_name=c("Control","Magnet", "OlysetPlus", "IG2"), 
+           treatment=c("0","1", "2", "3"), 
+           wash_status="unwashed")
+netcodes_L20=data.frame(treat=c("EMP-CTRL-L20x","1504112022-L20x", "0119052023-L20x","0112062023-L20x"), 
+           treatment=c("0","1", "2", "3"), 
+           insecticide_name=c("Control","Magnet", "OlysetPlus", "IG2"),
+           wash_status="20x")
+
+
+combined=rbind(data_103_CI_unwashed %>% right_join(netcodes_NL)%>% 
+             select("Round" ,"day" , "hut" , "treat" , "sleeper","insecticide_name","treatment",
+                    "unf_live","unf_dead","bf_live", "bf_dead","wash_status"
+                    #"tot_unf","tot_blf","tot_live", "tot_dead"
+                    ),
+           data_103_CI_washed %>% right_join(netcodes_L20)%>% 
+             select("Round" ,"day" , "hut" , "treat" , "sleeper","insecticide_name","treatment",
+                    "unf_live","unf_dead","bf_live", "bf_dead","wash_status"
+                    #"tot_unf","tot_blf","tot_live", "tot_dead"
+                    ))%>%
+  mutate(fed=bf_live+bf_dead, dead=unf_dead+bf_dead,
+         total=bf_live+bf_dead+unf_dead+unf_live#,
+         #test_dead=dead-tot_dead, test_fed=fed-tot_blf, test_tot=total-tot_live-tot_dead
+         )%>%
+  rename(UA="unf_live", UD="unf_dead", FD="bf_dead", FA="bf_live")
+
+# data consistency checks
+data_103_CI_compare=read_dta(  file=file.path(dataDir,"BIT103 IC all data.dta"))
+test=combined%>%left_join(data_103_CI_compare %>%filter(time==72))
+
+summary(test$fed-test$tot_blf)
+summary(test$dead-test$tot_dead)
+summary(test$total-test$fed-test$tot_unf)
+summary(test$total-test$dead-test$tot_live)
+
+
+summary(test$total-test$UA-test$UD-test$FD-test$FA)
+summary(test$total-test$UA-test$UD-test$FD-test$FA)
+
+
+# 24h
+
+combined_24=rbind(data_103_CI_unwashed_24 %>% right_join(netcodes_NL)%>% 
+             select("Round" ,"day" , "hut" , "treat" , "sleeper","insecticide_name","treatment",
+                    "unf_live","unf_dead","bf_live", "bf_dead","wash_status"
+                    #"tot_unf","tot_blf","tot_live", "tot_dead"
+                    ),
+           data_103_CI_washed_24 %>% right_join(netcodes_L20)%>% 
+             select("Round" ,"day" , "hut" , "treat" , "sleeper","insecticide_name","treatment",
+                    "unf_live","unf_dead","bf_live", "bf_dead","wash_status"
+                    #"tot_unf","tot_blf","tot_live", "tot_dead"
+                    ))%>%
+  mutate(fed=bf_live+bf_dead, dead=unf_dead+bf_dead,
+         total=bf_live+bf_dead+unf_dead+unf_live#,
+         #test_dead=dead-tot_dead, test_fed=fed-tot_blf, test_tot=total-tot_live-tot_dead
+         )%>%
+  rename(UA="unf_live", UD="unf_dead", FD="bf_dead", FA="bf_live")
+
+# data consistency checks
+test24=combined_24%>%left_join(data_103_CI_compare %>%filter(time==24))
+
+summary(test24$fed-test24$tot_blf)
+summary(test24$dead-test24$tot_dead)
+summary(test24$total-test24$fed-test24$tot_unf)
+summary(test24$total-test24$dead-test24$tot_live)
+
+
+data_bit103_CI_72=combined%>%
+  select(day, insecticide_name, treatment, UA, UD, FA, FD, wash_status, fed, dead, total)
+
+data_bit103_CI_24=combined_24%>%
+  select(day, insecticide_name, treatment, UA, UD, FA, FD, wash_status, fed, dead, total)
+
+```
+
+Save files
+
+```{r ,  results='hide' , warning=FALSE}
+write.csv(data_bit103_CI_72, file = file.path(outputsDir, "assenga_cotedivoire_72.csv"), row.names = F)
+write.csv(data_bit103_CI_24, file = file.path(outputsDir, "assenga_cotedivoire_24.csv"), row.names = F)
+
+```
+
+
+## BIT055
+
+Import dataset, rename and select main variables  (we obtain the netIDs from a previous file)
+
+```{r ,  results='hide' , warning=FALSE }
+data_bit055_old<-read.csv(file.path(dataDir,"BIT055_data.csv"))
+data_bit055_0<-read_excel(file.path(dataDir,"BIT055_GF_ Experimental_hut_LOCK.xlsx"), sheet=1)
+
+bit055_netcodes=data_bit055_old%>% select(netcode, netid,washed, netBrand)%>% unique()
+
+data_bit055=data_bit055_0%>% 
+  rename(netcode="Net/Treatment no.", hutno="Namba ya kibanda")%>%
+  select(- "Form row", -Trap_ID, -"Project Code")%>%
+  group_by(Serial, Date, hutno,netcode, Aliyelala , species)%>%
+  summarise_all(list(sum))%>%
+  ungroup()%>% 
+  left_join(bit055_netcodes)%>%
+  filter(species=="arabiensis",
+         netid %in% c("UOlysetPlus" ,"WOlysetPlus", "UOlyset","WOlyset" , "control"))%>%
+  mutate(treatment=ifelse( netid  %in% c("UOlyset" ,"WOlyset"), 1,
+                           ifelse( netid  %in% c("UOlysetPlus" ,"WOlysetPlus"), 2, 
+                                   ifelse( netid  %in% c("control"), 0, NA))),
+         insecticide_name=gsub("ontrol", "Control",substring(netid, 2)), 
+         washed=ifelse(netid %in% c("control"), "Control", washed),
+         wash_status=ifelse(washed==1, "20",as.character(washed))
+  )
+
+names(data_bit055)=gsub("amekula", "F", gsub("hajala", "U",
+                                             gsub("amekufa", "D",
+                                                  gsub("wazima", "A", gsub(" ", "", names(data_bit055))))))
+
+
+data_bit055_24=data_bit055 %>%
+  select(-UD, -UA, -FD, -FA)%>%
+  rename(UD=UD24, UA=UA24, FD=FD24, FA=FA24)%>%
+  mutate(total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD)%>%
+  select(Date, wash_status, insecticide_name, treatment, UA, UD, FA, FD, fed, dead, total)
+
+```
+
+
+Save files
+
+```{r }
+write.csv(data_bit055_24, file = file.path(outputsDir, "bit055_24.csv"), row.names = F)
+
+
+```
+
+## Odufuwa et al.
+
+Import dataset, rename and select main variables
+
+```{r ,  results='hide' , warning=FALSE }
+data_bit059_0<-read_excel(file.path(dataDir,"Experimental hut data_cleaned_59_80_full.xls"), sheet="BIT059 Cleaned")
+
+data_bit059=data_bit059_0%>% 
+  filter(meannetid %in% c("OlysetPlus", "PermaNet2.0", "Negative control"))%>%
+  mutate(treatment=ifelse( meannetid  == "PermaNet2.0" , 1,
+                           ifelse( meannetid =="OlysetPlus", 2, 
+                                   ifelse( meannetid =="Negative control", 0, NA))),
+         insecticide_name=meannetid, 
+         condition=ifelse(meannetid %in% c("Negative control"), "Control", condition),
+         wash_status=as.character(condition)
+  )%>%
+  rename(UD=unfeddead24, UA=unfedalive24, FD=feddead24, FA=fedalive24)%>%
+  mutate(total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD)%>%
+  select(day, UA, UD, FD, FA, fed, total, dead, wash_status, insecticide_name, treatment)
+
+```
+
+
+Save files
+
+```{r }
+write.csv(data_bit059, file = file.path(outputsDir, "Odufuwa_24.csv"), row.names = F)
+
+```
+
+## BIT080
+
+Import dataset, rename and select main variables
+
+```{r ,  results='hide' , warning=FALSE }
+data_bit080_0<-read_excel(file.path(dataDir,"Experimental hut data_cleaned_59_80_full.xls"), sheet="BIT080 Cleaned")
+
+data_bit080=data_bit080_0%>% 
+  filter(meannetid %in% c("InterceptorG2", "MiraNet", "Control"))%>%
+  mutate(treatment=ifelse( meannetid  == "MiraNet" , 1,
+                           ifelse( meannetid =="InterceptorG2", 2, 
+                                   ifelse( meannetid =="Control", 0, NA))),
+         insecticide_name=meannetid, 
+         condition=ifelse(netid %in% c("Control"), "Control", condition),
+         wash_status=as.character(condition)
+  )
+
+data_bit080_24=data_bit080 %>%
+  rename(UD=unfeddead24, UA=unfedalive24, FD=feddead24, FA=fedalive24)%>%
+  mutate(total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD)%>%
+  select(day, UA, UD, FD, FA, fed, total, dead,wash_status, insecticide_name, treatment)
+
+data_bit080_72=data_bit080 %>%
+  rename(UD=unfeddead72, UA=unfedalive72, FD=feddead72, FA=fedalive72)%>%
+  mutate(total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD)%>%
+  select(day, UA, UD, FD, FA, fed, total, dead, wash_status, insecticide_name, treatment)
+
+```
+
+
+Save files
+
+```{r }
+write.csv(data_bit080_24, file = file.path(outputsDir, "bit080_24.csv"), row.names = F)
+write.csv(data_bit080_72, file = file.path(outputsDir, "bit080_72.csv"), row.names = F)
+
+
+```
+
+## Martin et al. 2024
+
+Import dataset and select main variables
+```{r,  results='hide' }
+data_martin_0=read_dta(  file=file.path(dataDir,"Martin_journal.pgph.0002586.s002.dta")) %>% filter(netage %in% c(0, 36))%>%
+  separate(date, into= c("day", "month", "year"))
+
+data_martin=data_martin_0 %>%
+  rename(UA=(gaufalive72), FA=(gafedalive72), UD=(gaufdead72), FD=(gafeddead72),
+         insecticide_name=nettype) %>%
+  filter(insecticide_name %in% c("interceptor", "olysetplus","interceptorG2","untreated"))%>%
+  mutate(treatment=ifelse(insecticide_name %in% c("interceptor"), 1,
+                                  ifelse( insecticide_name %in% c("olysetplus"), 2, 
+                                          ifelse( insecticide_name %in% c("interceptorG2"), 3, 
+                                                   ifelse( insecticide_name %in% c("untreated"), 0, NA)))),
+         wash_status=ifelse(insecticide_name %in% c("untreated"), "Control", netage),
+         total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD,
+         )%>%
+  select(day, month, year, trialday, wash_status, insecticide_name, treatment, UA, UD, FA, FD, dead, fed, total)
+
+data_martin22=data_martin %>% filter(year %in% c(2022, 22))
+data_martin2021=data_martin %>% filter(year %in% c(2020, 2021))
+
+
+data_martin24=data_martin_0 %>%
+  rename(UA=(gaufalive24), FA=(gafedalive24), UD=(gaufdead24), FD=(gafeddead24), 
+         insecticide_name=nettype) %>%
+  filter(insecticide_name %in% c("interceptor", "olysetplus","interceptorG2","untreated"))%>%
+  mutate(treatment=ifelse(insecticide_name %in% c("interceptor"), 1,
+                                  ifelse( insecticide_name %in% c("olysetplus"), 2, 
+                                          ifelse( insecticide_name %in% c("interceptorG2"), 3, 
+                                                   ifelse( insecticide_name %in% c("untreated"), 0, NA)))),
+         wash_status=ifelse(insecticide_name %in% c("untreated"), "Control", netage),
+         total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD,
+         )%>%
+  select(day, month, year, trialday,wash_status, insecticide_name, treatment, UA, UD, FA, FD, dead, fed, total)
+
+
+data_martin_funestus=data_martin_0 %>%
+  rename(UA=(fuufalive72), FA=(fufedalive72), UD=(fuufdead72), FD=(fufeddead72),
+         insecticide_name=nettype) %>%
+  filter(insecticide_name %in% c("interceptor", "olysetplus","interceptorG2","untreated"))%>%
+  mutate(treatment=ifelse(insecticide_name %in% c("interceptor"), 1,
+                                  ifelse( insecticide_name %in% c("olysetplus"), 2, 
+                                          ifelse( insecticide_name %in% c("interceptorG2"), 3, 
+                                                   ifelse( insecticide_name %in% c("untreated"), 0, NA)))),
+         wash_status=ifelse(insecticide_name %in% c("untreated"), "Control", netage),
+         total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD,
+         )%>%
+  select(day, month, year, trialday,wash_status, insecticide_name, treatment, UA, UD, FA, FD, dead, fed, total)
+
+data_martin22_funestus=data_martin_funestus %>% filter(year %in% c(2022, 22))
+data_martin2021_funestus=data_martin_funestus %>% filter(year %in% c(2020, 2021))
+
+
+data_martin24_funestus=data_martin_0 %>%
+  rename(UA=(fuufalive24), FA=(fufedalive24), UD=(fuufdead24), FD=(fufeddead24), 
+         insecticide_name=nettype) %>%
+  filter(insecticide_name %in% c("interceptor", "olysetplus","interceptorG2","untreated"))%>%
+  mutate(treatment=ifelse(insecticide_name %in% c("interceptor"), 1,
+                                  ifelse( insecticide_name %in% c("olysetplus"), 2, 
+                                          ifelse( insecticide_name %in% c("interceptorG2"), 3, 
+                                                   ifelse( insecticide_name %in% c("untreated"), 0, NA)))),
+         wash_status=ifelse(insecticide_name %in% c("untreated"), "Control", netage),
+         total=UA+UD+FA+FD, fed=FA+FD, dead=UD+FD,
+         )%>%
+  select(trialday,wash_status, insecticide_name, treatment, UA, UD, FA, FD, dead, fed, total)
+
+```
+
+Save file.
+```{r,  results='hide'  }
+
+write.csv(data_martin, file = file.path(outputsDir, "martin_gambiae_72.csv"), row.names = F)
+write.csv(data_martin22, file = file.path(outputsDir, "martin2022_gambiae_72.csv"), row.names = F)
+write.csv(data_martin2021, file = file.path(outputsDir, "martin2020_gambiae_72.csv"), row.names = F)
+write.csv(data_martin24, file = file.path(outputsDir, "martin_gambiae_24.csv"), row.names = F)
+
+write.csv(data_martin_funestus, file = file.path(outputsDir, "martin_funestus_72.csv"), row.names = F)
+write.csv(data_martin24_funestus, file = file.path(outputsDir, "martin_funestus_24.csv"), row.names = F)
+write.csv(data_martin22_funestus, file = file.path(outputsDir, "martin2022_funestus_72.csv"), row.names = F)
+write.csv(data_martin2021_funestus, file = file.path(outputsDir, "martin2020_funestus_72.csv"), row.names = F)
+
+```
+
+
+
+## Nguessan et al. 2016
+
+Import dataset and select main variables
+
+```{r,  results='hide' }
+data_nguessan_0<-read_excel(file.path(dataDir,"Nguessan_2016_data.xlsx"), sheet=1)
+insecticide_id=data.frame(treatment=c(0,1,2,3,4,5,6,7),
+                          nettype=c("Control", "IG2, washed 15x", "ILN, washed 15x", "ILN, washed 20x", "IG2, washed 20x", "ILN, unwashed", "IG2, unwashed", "Chlorphenapyr"),
+                          ingredient=c("Control", "IG2", "ILN", "ILN", "IG2",
+                                       "ILN", "IG2", "Chlorphenapyr"),
+                          wash_status=c("Control", "15x", "15x", "20x", "20x",
+                                 "unwashed", "unwashed", "unwashed"))
+data_nguessan=data_nguessan_0 %>%
+  rename(UA=(unflive), FA=(bflive), UD=(unfdead), FD=(bfdead)) %>%
+  mutate(treatment=treat, datej=day-1)%>%
+  left_join(insecticide_id) %>%
+  filter(ingredient !="Chlorphenapyr")%>%
+  mutate(treatment=ifelse(ingredient=="Control", 0,
+                          ifelse(ingredient=="ILN", 1,
+                                 ifelse(ingredient=="IG2", 2,NA)))) %>%
+  mutate(insecticide_name=ingredient)%>%
+  select(day,wash_status, insecticide_name, treatment, UA, UD, FA, FD, dead, total)%>%
+  filter(wash_status !="15x")
+
+
+```
+
+Save file.
+```{r,  results='hide'  }
+write.csv(data_nguessan, file = file.path(outputsDir, "nguessan_72.csv"), row.names = F)
+
+```
+
+
+
+
+## Sovegnon et al. 2024
+
+Import dataset and select main variables
+
+```{r,  results='hide' }
+data_sovegnon_0<-read_excel(file.path(dataDir,"sauvegnon_2024.xlsx"), sheet=1)
+
+data_sovegnon = data_sovegnon_0 %>%
+  #filter(species=="An.gambiae")%>%
+  mutate(UD=as.numeric(mortality.72hrs==1&physio_status=="Unfed"),
+         UA=as.numeric(mortality.72hrs==0&physio_status=="Fed"),
+         FD=as.numeric(mortality.72hrs==1&physio_status=="Fed"),
+         FA=as.numeric(mortality.72hrs==0&physio_status=="Unfed"))%>%
+  group_by(season, hut, sleeper, week, day, treatment,  species)%>%
+  summarise(UD=sum(UD), FD=sum(FD), UA=sum(UA), FA=sum(FA))%>%
+  mutate(total=UA+UD+FA+FD)%>%
+  rename(nettype=treatment)%>%
+  filter(nettype %in% c("UTN", "IG2", "IG1.Aged", "IG1", "IG2.Aged"))%>%
+  mutate(
+    treatment=ifelse(nettype %in% c("IG1", "IG1.Aged"), 1,
+                                  ifelse( nettype %in% c("IG2", "IG2.Aged"), 2, 
+                                          ifelse( nettype %in% c("UTN"), 0,NA))),
+         wash_status=ifelse(nettype %in% c("UTN"), "Control", ifelse( nettype %in% c("IG1.Aged", "IG2.Aged"), "Aged", "Unwashed")),
+    insecticide_name=nettype
+  )%>%
+  ungroup()%>%
+  select(season, treatment, insecticide_name, UA, UD, FA, FD, total, wash_status)
+
+data_sovegnon_IG2_SRS=data_sovegnon %>%filter(season=="SRS", treatment !=1)%>% mutate(treatment=ifelse(treatment==2, 1, treatment))
+data_sovegnon_IG1_LRS=data_sovegnon %>%filter(season=="LRS", treatment !=2)
+
+```
+
+Save file.
+```{r,  results='hide'  }
+write.csv(data_sovegnon_IG2_SRS, file = file.path(outputsDir, "data_sovegnon_IG2_SRS_72.csv"), row.names = F)
+write.csv(data_sovegnon_IG1_LRS, file = file.path(outputsDir, "data_sovegnon_IG1_LRS_72.csv"), row.names = F)
+
+```
+
+# Summary tables
+
+## Total numbers
+
+```{r,  results='hide', message=FALSE }
+# function to aggregate data
+summarise_EHTdata_total=function(df, EHT, holdingtime){
+  p= df %>%
+    mutate(total=UA+UD+FA+FD)%>%
+    group_by(insecticide_name, wash_status) %>%
+    summarise(Total=sum(total, na.rm=TRUE),
+              UA=sum(UA, na.rm=TRUE), UD=sum(UD, na.rm=TRUE), FA=sum(FA, na.rm=TRUE),FD=sum(FD, na.rm=TRUE)
+    )%>%
+    mutate(EHT=EHT, holdingtime=paste0(holdingtime, "h"))
+
+  return(p)
+}
+
+# apply to all datasets
+all_data_sum_species_total=rbind(summarise_EHTdata_total( data_kibondo%>% filter(timeperiod==72), EHT="Kibondo\net al. 2022", holdingtime=72),
+                                 summarise_EHTdata_total( data_kibondo %>% filter(timeperiod==24), EHT="Kibondo\net al. 2022", holdingtime=24),
+                                 summarise_EHTdata_total( data_bit103_all_24, EHT="Assenga\net al. 2025, Tanzania", holdingtime=24),
+                                 summarise_EHTdata_total( data_bit103_all_72, EHT="Assenga\net al. 2025, Tanzania", holdingtime=72),
+                                 summarise_EHTdata_total( data_bit103_CI_72, EHT="Assenga\net al. 2025, Cote d Ivoire", holdingtime=24),
+                                 summarise_EHTdata_total( data_bit103_CI_24, EHT="Assenga\net al. 2025, Cote d Ivoire", holdingtime=72),
+                                 summarise_EHTdata_total( data_bit055_24, EHT="BIT055", holdingtime=24),
+                                 summarise_EHTdata_total( data_bit080_72, EHT="BIT080", holdingtime=72),
+                                 summarise_EHTdata_total( data_bit080_24, EHT="BIT080", holdingtime=24),
+                                 summarise_EHTdata_total( data_bit059, EHT="BIT059", holdingtime=24),
+                                 summarise_EHTdata_total( data_martin %>% filter(wash_status %in% c(0, 36, "Control")), EHT="Martin\net al. 2024, An. gambiae", holdingtime=72),
+                                 summarise_EHTdata_total( data_martin24%>% filter(wash_status %in% c(0, 36, "Control")), EHT="Martin\net al. 2024, An. gambiae", holdingtime=24),
+                                 summarise_EHTdata_total( data_martin_funestus%>% filter(wash_status %in% c(0, 36, "Control")), EHT="Martin\net al. 2024, An. funestus", holdingtime=72),
+                                 summarise_EHTdata_total( data_martin24_funestus%>% filter(wash_status %in% c(0, 36, "Control")), EHT="Martin\net al. 2024, An. funestus", holdingtime=24),
+                                 summarise_EHTdata_total( data_nguessan%>% filter(wash_status %in% c("unwashed", "20x", "Control")), EHT="Nguessan\net al. 2016", holdingtime=72),
+                                 summarise_EHTdata_total( data_sovegnon_IG2_SRS, EHT="Sovegnon\net al. 2024, 2", holdingtime=72),
+                                 summarise_EHTdata_total( data_sovegnon_IG1_LRS, EHT="Sovegnon\net al. 2024, 1", holdingtime=72)
+                                 
+
+)%>%
+  mutate(insecticide_name=ifelse(insecticide_name %in% c("IG2", "Interceptor_G2","Interceptor®G2", "Interceptor G2", "IG2.Aged", "interceptorG2", "InterceptorG2"), "Interceptor G2",
+                                 ifelse(insecticide_name %in% c("Olyset_Plus","OlysetPlus", "olysetplus"), "Olyset Plus", 
+                                        ifelse(insecticide_name %in% c("Control","UTN", "Negative control", "untreated"), "Control", 
+                                               ifelse(insecticide_name %in% c("IG1","IG1.Aged", "ILN", "interceptor", "Interceptor®"),"Interceptor", insecticide_name)))),
+         wash_status=ifelse(wash_status %in% c(0, "Unwashed", "unwashed"), "Unwashed", ifelse(wash_status %in% c( "Control"), ".", "Washed 20x"))
+         )
+
+
+```
+
+Supplementary table 1: Total numbers of mosquitoes for the three experimental hut trials considered. Each quantity refers to total value summing over all nights in each experiment for each arm.
+UA: Unfed alive ; UD: Unfed dead ; FA: Fed alive ; FD: Fed dead.
+
+only maximal holding time
+```{r, echo=T, results='asis'}
+total_table=all_data_sum_species_total %>%
+  filter(holdingtime ==ifelse(EHT %in% c("BIT055","BIT059" ),"24h", "72h" ))%>%
+  ungroup()%>%
+  arrange(EHT,insecticide_name, wash_status)%>%
+  select(EHT,insecticide_name, wash_status,  Total, UA, UD, FA, FD) %>%
+  rename("Net type"=insecticide_name, "Washed status"=wash_status)%>%
+  group_by(EHT)%>%
+  gt()
+
+total_table%>%  gt::gtsave(filename = file.path(plotDir, "my_table_total_wash_control.docx"))
+total_table
+
+
+
+```
+
+
+## Average per night
+```{r, results='hide', message=FALSE }
+# function to aggregate data
+summarise_EHTdata_perNight=function(df, EHT, holdingtime){
+  p= df %>%
+    mutate(fed= (FA+FD)/total,
+           dead=(FD+UD)/total,
+           total=UA+UD+FA+FD,
+           propUD=UD/(total))%>%
+    group_by(insecticide_name, wash_status) %>%
+    summarise(fed_mean=mean(fed, na.rm=TRUE), dead_mean=mean(dead, na.rm=TRUE), total_mean=mean(total, na.rm=TRUE),
+              fed_sd=sd(fed, na.rm=TRUE), dead_sd=sd(dead, na.rm=TRUE), total_sd=sd(total, na.rm=TRUE),
+              fed_sd=sd(fed, na.rm=TRUE), dead_sd=sd(dead, na.rm=TRUE), total_sd=sd(total, na.rm=TRUE),
+              UA_mean=mean(UA, na.rm=TRUE), UD_mean=mean(UD, na.rm=TRUE), FA_mean=mean(FA, na.rm=TRUE),FD_mean=mean(FD, na.rm=TRUE),F_mean=mean(FD+FA, na.rm=TRUE),
+              UA_sd=sd(UA, na.rm=TRUE), UD_sd=sd(UD, na.rm=TRUE), FA_sd=sd(FA, na.rm=TRUE), FD_sd=sd(FD, na.rm=TRUE), F_sd=sd(FD+FA, na.rm=TRUE),
+              propUD_mean=mean(propUD, na.rm=TRUE),
+              propUD_sd=sd(propUD, na.rm=TRUE),
+    )%>%
+    tidyr::pivot_longer(cols = c(fed_mean, dead_mean, total_mean,
+                                 fed_sd, dead_sd, total_sd,
+                                 UA_mean, UD_mean, F_mean, FA_mean, FD_mean,
+                                 UA_sd, UD_sd, F_sd, FA_sd, FD_sd,
+                                 propUD_mean,propUD_sd ), names_to = "quantity"
+    ) %>%
+    tidyr::separate(col=quantity, into = c("name","stat" ), sep = "_")%>%
+    pivot_wider(id_cols = c("insecticide_name", "wash_status", "name"),names_from= "stat", values_from="value")%>%
+    mutate(name=factor(name, levels=c("fed", "dead", "total","UA", "UD", "FA", "FD", "F", "propUD"),
+                       labels=c("Fed", "Dead", "Total", "UA", "UD", "FA", "FD", "F", "propUD")),
+           EHT=EHT, holdingtime=paste0(holdingtime, "h"))
+
+  return(p)
+}
+
+# apply to all datasets
+all_data_sum_species_perNight=rbind(summarise_EHTdata_perNight( data_kibondo%>% filter(timeperiod==72), EHT="Kibondo\net al. 2022", holdingtime=72),
+                                    summarise_EHTdata_perNight( data_kibondo %>% filter(timeperiod==24), EHT="Kibondo\net al. 2022", holdingtime=24),
+                                    summarise_EHTdata_perNight( data_bit103_all_24, EHT="Assenga\net al. 2025, Tanzania", holdingtime=24),
+                                    summarise_EHTdata_perNight( data_bit103_all_72, EHT="Assenga\net al. 2025, Tanzania", holdingtime=72),
+                                    summarise_EHTdata_perNight( combined, EHT="Assenga\net al. 2025, Cote d Ivoire", holdingtime=24),
+                                 summarise_EHTdata_perNight( combined_24, EHT="Assenga\net al. 2025, Cote d Ivoire", holdingtime=72),
+                                 summarise_EHTdata_perNight( data_bit055_24, EHT="BIT055", holdingtime=24),
+                                    summarise_EHTdata_perNight( data_bit080_72, EHT="BIT080", holdingtime=72),
+                                    summarise_EHTdata_perNight( data_bit059, EHT="BIT059", holdingtime=24),
+                                    summarise_EHTdata_perNight( data_bit080_24, EHT="BIT080", holdingtime=24),
+                                 summarise_EHTdata_perNight( data_martin, EHT="Martin\net al. 2024, An. gambiae", holdingtime=72),
+                                 summarise_EHTdata_perNight( data_martin24, EHT="Martin\net al. 2024, An. gambiae", holdingtime=24),
+                                 summarise_EHTdata_perNight( data_martin_funestus, EHT="Martin\net al. 2024, An. funestus", holdingtime=72),
+                                 summarise_EHTdata_perNight( data_martin24_funestus, EHT="Martin\net al. 2024, An. funestus", holdingtime=24),
+                                 summarise_EHTdata_perNight( data_nguessan, EHT="Nguessan\net al. 2016", holdingtime=72),
+                                 summarise_EHTdata_perNight( data_sovegnon_IG2_SRS, EHT="Sovegnon\net al. 2024, 2", holdingtime=72),
+                                 summarise_EHTdata_perNight( data_sovegnon_IG1_LRS, EHT="Sovegnon\net al. 2024, 1", holdingtime=72)
+
+)%>%
+  mutate(insecticide_name=ifelse(insecticide_name %in% c("IG2", "Interceptor_G2","Interceptor®G2", "Interceptor G2", "IG2.Aged", "interceptorG2", "InterceptorG2"), "Interceptor G2",
+                                 ifelse(insecticide_name %in% c("Olyset_Plus","OlysetPlus", "olysetplus"), "Olyset Plus", 
+                                        ifelse(insecticide_name %in% c("Control","UTN", "Negative control", "untreated"), "Control", 
+                                               ifelse(insecticide_name %in% c("IG1","IG1.Aged", "ILN", "interceptor", "Interceptor®"),"Interceptor", insecticide_name)))),
+         wash_status=ifelse(wash_status %in% c(0, "Unwashed", "unwashed"), "Unwashed", ifelse(wash_status %in% c( "Control"), ".", "Washed 20x")),
+         lower_b=pmax(mean-2*sd, 0), upper_b=ifelse(name %in% c("Fed", "Dead"), pmin(mean+2*sd,1), mean+2*sd)
+         )
+
+```
+
+Supplementary table 2: Summary statistics for the three experimental hut trials. Each quantity refers to average value over all nights in the experiment,  “Fed” and “Dead” correspond to respectively to (FA+FD)/Total and (UD+FD)/Total. Uncertainty intervals correspond to the mean value ± 2 standard deviations (capped to the [0-1] intervals for the proportions of fed and dead). UA: Unfed alive ; UD: Unfed dead ; FA: Fed alive ; FD: Fed dead.
+
+```{r, echo=T, results='asis'}
+
+perNight_table=all_data_sum_species_perNight %>%
+  filter(holdingtime ==ifelse(EHT %in% c("BIT055","BIT059" ),"24h", "72h" ))%>%
+  filter(! name %in% c("propUD", "F"))%>%
+  mutate(mean=ifelse(name %in% c("Fed", "Dead"), round(mean, digits = 2), round(mean, digits = 0)),
+         lower_b=ifelse(name %in% c("Fed", "Dead"), round(lower_b, digits = 2), round(lower_b, digits = 0)),
+         upper_b=ifelse(name %in% c("Fed", "Dead"), round(upper_b, digits = 2), round(upper_b, digits = 0)))%>%
+  mutate(value=paste0(mean, " (", lower_b, "-", upper_b, ")"))%>%
+  select(EHT, insecticide_name, wash_status, name, value) %>%
+  pivot_wider(id_cols = c(EHT, insecticide_name, wash_status), names_from = name, values_from = c(value))%>%
+  arrange(EHT, insecticide_name, wash_status)%>%
+  rename("Net type"=insecticide_name, "Wash status"=wash_status)%>%
+  group_by(EHT)%>%
+  gt()
+
+perNight_table%>%  gt::gtsave(filename = file.path(plotDir, "my_table_perNight_wash_control.docx"))
+perNight_table
+
+
+```
+

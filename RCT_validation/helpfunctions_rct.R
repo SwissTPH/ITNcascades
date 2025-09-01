@@ -1,3 +1,40 @@
+calibration_wrapper = function(my_all_simul, scens, fitdat, select_subset =.5, mystandardITN){
+  scens_small=scens %>% filter(StandardITN==mystandardITN)
+  
+  all_simul_small=my_all_simul %>% filter(scenario_id %in% unique(scens_small$ID))%>%
+    left_join(scens_small%>%mutate(scenario_id=ID))%>%
+    mutate(EIR=as.numeric(EIR),
+           month=as.numeric(format(as.Date(date), "%m")),
+           year=as.numeric(format(as.Date(date), "%y"))+2000)
+  
+  calibrated_data=calibration(all_simul_small, fitdat = fitdat)
+  
+  #calibrated_data$calibration_reformat$EIR_num[calibrated_data$calibration_reformat$EIR_num<10]=10
+  
+  final_output=merge_calibration_simulation(calibration_reformat=calibrated_data$calibration_reformat, my_all_simul=all_simul_small )
+  
+  final_output$seed_avg= final_output$simul_calib %>%
+    mutate(sup=str_detect( setting, pattern = ("_sup")), inf=str_detect( setting, pattern = ("_inf")), setting=gsub("_inf", "", gsub("_sup", "", setting)))%>%
+    group_by(setting, year, month, age )%>%
+    summarise(PR_mini=min(PR_mini), PR_maxi=max(PR_maxi), PR_middle=mean(PR_middle[sup==FALSE & inf==FALSE]))
+  
+  seed_avg_pooled= final_output$simul_calib %>%
+    mutate(IG2=str_detect( setting, pattern = ("IG2")), PBO=str_detect( setting, pattern = ("PBO" )),
+           sup=str_detect( setting, pattern = ("_sup")), inf=str_detect( setting, pattern = ("_inf")),
+           setting0=gsub("_inf", "", gsub("_sup", "", setting)),
+           setting=ifelse(IG2, "IG2", ifelse(PBO, "OlysetPlus", "Pyrethroid")),
+    )%>%
+    group_by(setting, year, month, age )%>%
+    summarise(PR_mini=min(PR_mini), PR_maxi=max(PR_maxi), PR_middle=mean(PR_middle[sup==FALSE & inf==FALSE]))
+  
+  return(list("calibrated_data"=calibrated_data, 
+              "final_output"=final_output,
+              "seed_avg_pooled"=seed_avg_pooled))
+}
+
+
+
+
 compute_CI = function(est,size,crit=1.96){
   sd=sqrt(est*(1-est)/size)
   LCI=est-crit*sd

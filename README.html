@@ -374,17 +374,22 @@ real-life conditions</strong><br />
 Clara Champagne, Jeanne Lemant, Alphonce Assenga, Ummi A. Kibondo, Ruth
 G. Lekundayo, Emmanuel Mbuba, Jason Moore, Joseph B. Muganga, Watson S.
 Ntabaliba, Olukayode G. Odufuwa, Johnson Kyeba Swai, Maria Alexa, Roland
-Goers, Monica Golumbeanu, Nakul Chitnis, Amanda Ross, Sarah Moore,
-Emilie Pothin</p>
-<p>The user should refer to the manuscript for methodological details.
-Additionally, a dashboard to explore the results is available <a href="https://aimswisstph.shinyapps.io/ITNcascadesdashboard/">here</a>.</p>
+Goers, Monica Golumbeanu, Nakul Chitnis, Amanda Ross, Raphael N’Guessan,
+Sarah Moore, Emilie Pothin</p>
+<p>The user should refer to the <a href="https://www.medrxiv.org/content/10.1101/2025.02.07.25321565v1">manuscript</a>
+for methodological details. Additionally, a dashboard to explore the
+results is available <a href="https://swisstph.shinyapps.io/ITNcascadesdashboard/">here</a>.</p>
 <div id="built-with" class="section level3">
 <h3>Built With</h3>
 <ul>
-<li><a href="https://github.com/SwissTPH/AnophelesModel/tree/main">AnophelesModel</a></li>
-<li><a href="https://github.com/SwissTPH/openmalaria">OpenMalaria</a></li>
-<li><a href="https://github.com/SwissTPH/r-openMalariaUtilities">OpenMalariaUtilities</a></li>
-<li><a href="https://cran.r-project.org/web/packages/rstan/index.html">rstan</a></li>
+<li><a href="https://github.com/SwissTPH/AnophelesModel/tree/main">AnophelesModel</a>,
+version 1.1.0 and later</li>
+<li><a href="https://github.com/SwissTPH/openmalaria">OpenMalaria</a>,
+version 44</li>
+<li><a href="https://github.com/SwissTPH/r-openMalariaUtilities">OpenMalariaUtilities</a>,
+version 23.02</li>
+<li><a href="https://cran.r-project.org/web/packages/rstan/index.html">rstan</a>,
+version 2.37.7</li>
 </ul>
 </div>
 </div>
@@ -397,6 +402,8 @@ analysis of Experimental Hut Trial data, as well as for building
 effectiveness cascades</li>
 <li><strong>RCT_validation</strong>: includes the code for mathematical
 modelling of Randomized Controlled Trials with OpenMalaria</li>
+<li><strong>ITNcascadesdashboard</strong>: includes the code for the
+online dashboard</li>
 </ul>
 <div id="eht_fit" class="section level3">
 <h3>EHT_fit</h3>
@@ -405,16 +412,27 @@ modelling of Randomized Controlled Trials with OpenMalaria</li>
 <li><strong>1_Data_formatting</strong>: contains the code used to
 process the input EHT data, convert it into the proper format for
 inference, and compute descriptive statistics</li>
-<li><strong>2_EHT_fitting_multinomial</strong>: contains the code to
-perform the statistical inference as well as provide the effectiveness
-cascades</li>
-<li><strong>3_convergence_diagnostics</strong>: contains the convergence
-diagnostics for MCMC outputs with stan</li>
-<li><strong>4_create_inputs_dasboards</strong>: formats and summarises
-the outputs for the dashboard</li>
+<li><strong>2_EHT_fitting</strong>: contains the code to perform the
+statistical inference as well as provide the effectiveness cascades</li>
+<li><strong>2b_convergence_diagnostics</strong>: contains the
+convergence diagnostics for MCMC outputs with stan</li>
+<li><strong>3_compute_vectorial_capacity</strong>: computes the
+vectorial capacity and summarises the of the EHT analysis outcomes
+(Figure 1)</li>
+<li><strong>3b_compute_vectorial_capacity_24</strong>: computes the
+vectorial capacity and summarises the of the EHT analysis outcomes,
+suing 24h holding time for all EHTs</li>
+<li><strong>4_EffectivenessCascades</strong>: calculates and visualise
+the effectiveness cascades</li>
 </ul>
 <p>Other scripts are functions to be sourced while running the
 analysis.</p>
+<p>The folder <strong>processed_data</strong> contains the data used for
+the EHT fitting. The file
+<strong>fitted_parameters_posteriormax.csv</strong> contains the fitted
+parameters (posterior maximum). The file
+<strong>fitted_parameters_pyr.csv</strong> contains summary statistics
+on the posterior distribution for each fitted parameter.</p>
 </div>
 <div id="rct_validation" class="section level3">
 <h3>RCT_validation</h3>
@@ -422,22 +440,22 @@ analysis.</p>
 <ul>
 <li><strong>1_seasonality</strong>: contains the code used to export
 seasonality patterns from CHIRPS</li>
-<li><strong>2a_fit_ITNcov_mosha</strong> and
-<strong>2b_fit_ITNcov_protopopoff</strong>: contains the code to compute
-functional survival and net durability parameters for each RCT</li>
-<li><strong>3a_RCT_mosha_controlArm</strong> and
-<strong>3b_RCT_protopopoff_controlArm</strong>: contains the code
-required to run OpenMalaria for the control arms of each RCT</li>
-<li><strong>4a_RCT_mosha_interventionArms</strong> and
-<strong>4b_RCT_protopopoff_interventionArms</strong>: contains the code
-required to run OpenMalaria for the intervention arms of each RCT
-(validation)</li>
-<li><strong>5a_validation_final_plot</strong>: contains the code for
+<li><strong>2_ITNfunctionalSurvival</strong>: contains the code to
+compute functional survival and net durability parameters for each
+RCT</li>
+<li><strong>3_get_exposure_all_trials</strong>: contains the code to
+calculate in-bed exposure coefficients in each trial</li>
+<li><strong>4a_RCT_mosha</strong> , <strong>4b_RCT_protopopoff</strong>,
+<strong>4c_RCT_accrombessi</strong> and <strong>4b_RCT_staedke</strong>:
+contains the code required to run OpenMalaria for the intervention arms
+of each RCT (validation)</li>
+<li><strong>5_validation_summary_figure</strong>: contains the code for
 final visualisation of the results as well as goodness of fit
 diagnostics</li>
 </ul>
-<p>Other scripts are functions to be sourced while running the
-analysis.</p>
+<p>Other scripts are functions to be sourced while running the analysis.
+The folder <strong>csv_inputs</strong> contains the data and simulation
+outputs required to reproduce the manuscript’s figures.</p>
 </div>
 </div>
 <div id="authors-contact" class="section level2">

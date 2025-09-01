@@ -1,11 +1,23 @@
-return_anophelesParam=function(mosqs, value_effect){
+return_anophelesParam=function(mosqs, value_effect, param, mosqs_exposures){
   anophelesParams = list()
   for (m in mosqs){
     indoor=str_detect(m, "indoor")
+    exposure_m=as.numeric(mosqs_exposures[m])
+
+    if(! is.null(value_effect)){
+      value_effect_simple=value_effect$Unwashed
+      names(value_effect_simple)=value_effect$parameter
+      #value_effect_corrected=round(correct_inbed_exposure_gvi(myproba=value_effect_simple, inbed = exposure_m), digits = 2)
+      value_effect_corrected=round(getvalue_gvi(myproba=value_effect_simple), digits = 2)
+      myvalue=as.character(as.numeric(value_effect_corrected[param]))
+    } else {
+      myvalue=0
+    }
+
     this.list=list(
       m_in = list(
         propActive = ifelse(indoor, 1, 0),
-        value = ifelse(indoor, as.character(value_effect), 0)
+        value = ifelse(indoor, myvalue, 0)
       ))
     names(this.list)=m
     anophelesParams=append(anophelesParams, this.list)
@@ -13,81 +25,165 @@ return_anophelesParam=function(mosqs, value_effect){
   return(anophelesParams)
 }
 
+#' #' Calculate phi parameter (preprandial killing effect)
+#' #'
+#' #' @inheritParams P_UA_new
+#' #' @return Updated phi value
+#' calculate_phi=function(alpha0, mu0, mypi, mykappa){
+#'   mu_i=mu0+alpha0*mykappa
+#'   alpha_i=alpha0*(1-mypi)
+#' 
+#'   p_UD_0=P_UD(alpha0,mu0)
+#'   p_UD_i=P_UD(alpha_i,mu_i)
+#' 
+#'   phi=1-(1-p_UD_i)/(1-p_UD_0)
+#'   return(phi)
+#' }
+#' 
+#' #' Probability of remaining Unfed Alive (UA)
+#' #'
+#' #' @param alpha Transition rate to fed
+#' #' @param mu Transition rate to dead
+#' #' @param tt Time
+#' #' @return Probability of staying UA at time tt
+#' P_UA=function(alpha, mu, tt=1){
+#'   return(
+#'     exp(-(alpha+mu)*tt)
+#'   )
+#' }
+#' 
+#' 
+#' #' Probability of becoming Unfed Dead (UD)
+#' #'
+#' #' @inheritParams P_UA
+#' #' @return Probability of being UD at time tt
+#' P_UD=function(alpha, mu, tt=1){
+#' 
+#' 
+#'   return(
+#'     (1-P_UA(alpha,mu, tt))*mu/(alpha+mu)
+#'   )
+#' }
+#' 
+#' 
+#' ######### correct_inbed_exposure #####
+#' #' @title correct_inbed_exposure
+#' #'
+#' #' @description  \code{correct_inbed_exposure}
+#' #' Correct deterrence, preprandial and postprandial parameters for in-bed exposure
+#' #'
+#' #' @param stan_output an object
+#' #' @param inbed exposure coefficient, from AnophelesModel
+#' #'
+#' #' @return updated vector of probabilities
+#' #'
+#' correct_inbed_exposure_gvi <- function(myproba, inbed){
+#' 
+#'   deterrency_update=myproba["Repellent"]*inbed
+#'   kappa_update=myproba["KillingDuringHostSeeking"]*inbed
+#'   postprandial_update=myproba["Postprandialkilling"]*inbed*(1-myproba["Repellent"])/(1-myproba["Repellent"]*inbed)
+#'   preprandial_update=calculate_phi(alpha0=myproba["alpha_0"],
+#'                                    mu0=myproba["mu_0"],
+#'                                    deterrency_update, kappa_update)
+#' 
+#'   myproba_update=c(deterrency_update,preprandial_update,postprandial_update)
+#'   names(myproba_update)=c("Deterrence","PrePrandial","PostPrandial")
+#' 
+#'   return(myproba_update)
+#' }
 
+######### correct_inbed_exposure #####
+#' @title correct_inbed_exposure
+#'
+#' @description  \code{correct_inbed_exposure}
+#' Correct deterrence, preprandial and postprandial parameters for in-bed exposure
+#'
+#' @param stan_output an object
+#' @param inbed exposure coefficient, from AnophelesModel
+#'
+#' @return updated vector of probabilities
+#'
+getvalue_gvi <- function(myproba){
+  
+  deterrency_update=myproba["Repellent"]
+  preprandial_update=myproba["Preprandialkilling"]
+  postprandial_update=myproba["Postprandialkilling"]
+  myproba_update=c(deterrency_update,preprandial_update,postprandial_update)
+  names(myproba_update)=c("Deterrence","PrePrandial","PostPrandial")
+  
+  return(myproba_update)
+}
 
-extract_GVI_params=function(EHT, netType, halflife_functionalSurvival, kappa_functionalSurvival, exposure_correction, myname, mosqs, parameters_GVI){
+#' Extract GVi values for ITNs from an external file containing fits from EHT data. Overall wrapper
+#'
+#' @param EHT name of the EHT from which fitted parameters are extracted
+#' @param halflife_functionalSurvival Half life of the net representing functional survival. Assumes a Weibull decay
+#' @param kappa_functionalSurvival Shape parameter for the decay in functional survival. Assumes a Weibull decay
+#' @param exposure_correction 
+#' @param myname a name to give to the snippet
+#' @param mosqs a mosq object from OpenMalariaUtilities
+#' @param parameters_GVI the dataframe containing parameter values
+#' @return the input for the function called defineGVI_simple
+#' @export
+extract_GVI_params=function(EHT, netType, halflife_functionalSurvival, kappa_functionalSurvival, mosqs_exposures, myname, mosqs, parameters_GVI, insecticide_decay=T, decay="weibull"){
   my_GVI_params=update_halflife_insecticideDecay(my_parameters_GVI=parameters_GVI,
                                                  halflife=halflife_functionalSurvival, kappa=kappa_functionalSurvival,
-                                                 my_EHT =EHT, my_netType=netType)
+                                                 my_EHT =EHT, my_netType=netType, insecticide_decay=insecticide_decay)
   
   
-  create_vectorInterventionParameters_3decays(deterrency = my_GVI_params$mean_Unwashed[my_GVI_params$parameter=="Reduction in host availability"],
-                                              preprandial = my_GVI_params$mean_Unwashed[my_GVI_params$parameter=="Pre-prandial killing effect"],
-                                              postprandial = my_GVI_params$mean_Unwashed[my_GVI_params$parameter=="Post-prandial killing effect"],
-                                              deterrency_inf = my_GVI_params$q025_Unwashed[my_GVI_params$parameter=="Reduction in host availability"],
-                                              preprandial_inf = my_GVI_params$q025_Unwashed[my_GVI_params$parameter=="Pre-prandial killing effect"],
-                                              postprandial_inf =  my_GVI_params$q025_Unwashed[my_GVI_params$parameter=="Post-prandial killing effect"],
-                                              deterrency_sup = my_GVI_params$q975_Unwashed[my_GVI_params$parameter=="Reduction in host availability"],
-                                              preprandial_sup = my_GVI_params$q975_Unwashed[my_GVI_params$parameter=="Pre-prandial killing effect"],
-                                              postprandial_sup =  my_GVI_params$q975_Unwashed[my_GVI_params$parameter=="Post-prandial killing effect"],
-                                              
-                                              L_deterrency=my_GVI_params$final_hl[my_GVI_params$parameter=="Reduction in host availability"],
-                                              kappa_deterrency=my_GVI_params$final_kappa[my_GVI_params$parameter=="Reduction in host availability"],
-                                              L_preprandial=my_GVI_params$final_hl[my_GVI_params$parameter=="Pre-prandial killing effect"],
-                                              kappa_preprandial=my_GVI_params$final_kappa[my_GVI_params$parameter=="Pre-prandial killing effect"],
-                                              L_postprandial=my_GVI_params$final_hl[my_GVI_params$parameter=="Post-prandial killing effect"],
-                                              kappa_postprandial=my_GVI_params$final_kappa[my_GVI_params$parameter=="Post-prandial killing effect"],
-                                              decay= "weibull",exposure_correction=exposure_correction,  myname= myname, mosqs = mosqs)
+  if(insecticide_decay){
+    deterrency_snippet=create_vectorInterventionParameters(my_GVI_params, param="deterrence",decay= decay, myname=paste0(myname, "_deterrency"), mosqs=mosqs, mosqs_exposures=mosqs_exposures)
+    preprandial_snippet=create_vectorInterventionParameters(my_GVI_params, param="preprandial",decay= decay, myname=paste0(myname, "_preprandial"), mosqs=mosqs, mosqs_exposures=mosqs_exposures)
+    postprandial_snippet=create_vectorInterventionParameters(my_GVI_params, param="postprandial",decay= decay, myname=paste0(myname, "_postprandial"), mosqs=mosqs, mosqs_exposures=mosqs_exposures)
+  
+    output=list(deterrency_snippet, preprandial_snippet,postprandial_snippet)
+  } else {
+    gvi_snippet=create_vectorInterventionParameters(my_GVI_params, param="all",L=halflife_functionalSurvival,kappa=kappa_functionalSurvival,
+                                                    decay= decay, myname=myname, mosqs=mosqs, mosqs_exposures=mosqs_exposures)
+    output=gvi_snippet
+  }
+
+  return(output)
 }
 
 
-
-
-create_vectorInterventionParameters_3decays = function(deterrency, preprandial, postprandial,
-                                                         deterrency_inf, preprandial_inf, postprandial_inf,
-                                                         deterrency_sup, preprandial_sup, postprandial_sup,
-                                                         L_deterrency, kappa_deterrency,
-                                                         L_preprandial, kappa_preprandial,
-                                                         L_postprandial, kappa_postprandial, decay= "weibull",exposure_correction,  myname, mosqs){
-
-  deterrency_snippet=create_vectorInterventionParameters(deterrency=deterrency*exposure_correction, preprandial=0, postprandial=0,
-                                                          L=L_deterrency, kappa=kappa_deterrency, decay= decay, myname=paste0(myname, "_deterrency"), mosqs=mosqs)
-  preprandial_snippet=create_vectorInterventionParameters(deterrency=0, preprandial=preprandial*exposure_correction, postprandial=0,
-                                                           L=L_preprandial, kappa=kappa_preprandial, decay= decay, myname=paste0(myname, "_preprandial"), mosqs=mosqs)
-  postprandial_snippet=create_vectorInterventionParameters(deterrency=0, preprandial=0, postprandial=postprandial*exposure_correction,
-                                                            L=L_postprandial, kappa=kappa_postprandial, decay= decay, myname=paste0(myname, "_postprandial"), mosqs=mosqs)
-
-  deterrency_snippet_inf=create_vectorInterventionParameters(deterrency=deterrency_inf*exposure_correction, preprandial=0, postprandial=0,
-                                                              L=L_deterrency, kappa=kappa_deterrency, decay= decay, myname=paste0(myname, "_inf_deterrency"), mosqs=mosqs)
-  preprandial_snippet_inf=create_vectorInterventionParameters(deterrency=0, preprandial=preprandial_inf*exposure_correction, postprandial=0,
-                                                               L=L_preprandial, kappa=kappa_preprandial, decay= decay, myname=paste0(myname, "_inf_preprandial"), mosqs=mosqs)
-  postprandial_snippet_inf=create_vectorInterventionParameters(deterrency=0, preprandial=0, postprandial=postprandial_inf*exposure_correction,
-                                                                L=L_postprandial, kappa=kappa_postprandial, decay= decay, myname=paste0(myname, "_inf_postprandial"), mosqs=mosqs)
-
-
-  deterrency_snippet_sup=create_vectorInterventionParameters(deterrency=deterrency_sup*exposure_correction, preprandial=0, postprandial=0,
-                                                              L=L_deterrency, kappa=kappa_deterrency, decay= decay, myname=paste0(myname, "_sup_deterrency"), mosqs=mosqs)
-  preprandial_snippet_sup=create_vectorInterventionParameters(deterrency=0, preprandial=preprandial_sup*exposure_correction, postprandial=0,
-                                                               L=L_preprandial, kappa=kappa_preprandial, decay= decay, myname=paste0(myname, "_sup_preprandial"), mosqs=mosqs)
-  postprandial_snippet_sup=create_vectorInterventionParameters(deterrency=0, preprandial=0, postprandial=postprandial_sup*exposure_correction,
-                                                                L=L_postprandial, kappa=kappa_postprandial, decay= decay, myname=paste0(myname, "_sup_postprandial"), mosqs=mosqs)
-
-
-  return(list(deterrency_snippet, preprandial_snippet,postprandial_snippet,
-              deterrency_snippet_inf, preprandial_snippet_inf,postprandial_snippet_inf,
-              deterrency_snippet_sup, preprandial_snippet_sup,postprandial_snippet_sup))
-}
-
-
-
-
-create_vectorInterventionParameters = function(deterrency, preprandial, postprandial,
-                                                L, kappa, decay= "weibull", myname, mosqs){
-
-  anophParam_deterrency=return_anophelesParam(mosqs, value_effect = deterrency)
-  anophParam_preprandial=return_anophelesParam(mosqs, value_effect = preprandial)
-  anophParam_postprandial=return_anophelesParam(mosqs, value_effect = postprandial)
-
+#' Create GVI snippet for the point estimate, the lower and the upper bound of the credible intervals
+#'
+#' @return a list of inputs for the function called defineGVI_simple
+#' @export
+create_vectorInterventionParameters = function(my_GVI_params, param="all",#deterrency, preprandial, postprandial,
+                                               L=NULL, kappa=NULL, decay= "weibull", myname, mosqs, mosqs_exposures){
+  
+  
+  my_GVI_params_det=my_GVI_params
+  my_GVI_params_pre=my_GVI_params
+  my_GVI_params_post=my_GVI_params
+  
+  if(param=="deterrence"){
+    my_GVI_params_pre=NULL
+    my_GVI_params_post=NULL
+    L=my_GVI_params$final_hl[my_GVI_params$parameter=="Repellent"]
+    kappa=my_GVI_params$final_kappa[my_GVI_params$parameter=="Repellent"]
+  }
+  if(param=="preprandial"){
+    my_GVI_params_det=NULL
+    my_GVI_params_post=NULL
+    L=my_GVI_params$final_hl[my_GVI_params$parameter=="Preprandialkilling"]
+    kappa=my_GVI_params$final_kappa[my_GVI_params$parameter=="Preprandialkilling"]
+    
+  }
+  if(param=="postprandial"){
+    my_GVI_params_det=NULL
+    my_GVI_params_pre=NULL
+    L=my_GVI_params$final_hl[my_GVI_params$parameter=="Postprandialkilling"]
+    kappa=my_GVI_params$final_kappa[my_GVI_params$parameter=="Postprandialkilling"]
+    
+  }
+  
+  anophParam_deterrency=return_anophelesParam(mosqs, value_effect = my_GVI_params_det, param="Deterrence", mosqs_exposures=mosqs_exposures)
+  anophParam_preprandial=return_anophelesParam(mosqs, value_effect = my_GVI_params_pre, param="PrePrandial", mosqs_exposures=mosqs_exposures)
+  anophParam_postprandial=return_anophelesParam(mosqs, value_effect = my_GVI_params_post, param="PostPrandial", mosqs_exposures=mosqs_exposures)
+  
   myvectorInterventionParameters <- list(
     myname = list(
       deterrency = list(
@@ -117,6 +213,48 @@ create_vectorInterventionParameters = function(deterrency, preprandial, postpran
   return(myvectorInterventionParameters)
 }
 
+#' #' Create GVI snippet for the point estimate, the lower and the upper bound of the credible intervals
+#' #'
+#' #' @return a list of inputs for the function called defineGVI_simple
+#' #' @export
+#' create_vectorInterventionParameters_old = function(deterrency, preprandial, postprandial,
+#'                                                 L, kappa, decay= "weibull", myname, mosqs, mosqs_exposures){
+#' 
+#'   anophParam_deterrency=return_anophelesParam(mosqs, value_effect = deterrency, mosqs_exposures=mosqs_exposures)
+#'   anophParam_preprandial=return_anophelesParam(mosqs, value_effect = preprandial, mosqs_exposures=mosqs_exposures)
+#'   anophParam_postprandial=return_anophelesParam(mosqs, value_effect = postprandial, mosqs_exposures=mosqs_exposures)
+#' 
+#'   myvectorInterventionParameters <- list(
+#'     myname = list(
+#'       deterrency = list(
+#'         decay = list(
+#'           L = as.character(L), k=as.character(kappa),
+#'           "function" = decay
+#'         ),
+#'         anophelesParams = anophParam_deterrency
+#'       ),
+#'       preprandialKillingEffect = list(
+#'         decay = list(
+#'           L = as.character(L), k=as.character(kappa),
+#'           "function" = decay
+#'         ),
+#'         anophelesParams = anophParam_preprandial
+#'       ),
+#'       postprandialKillingEffect = list(
+#'         decay = list(
+#'           L = as.character(L), k=as.character(kappa),
+#'           "function" = decay
+#'         ),
+#'         anophelesParams = anophParam_postprandial
+#'       )
+#'     )
+#'   )
+#'   names(myvectorInterventionParameters)=myname
+#'   return(myvectorInterventionParameters)
+#' }
+
+########
+# Add the GVI parameters to the baseList for OpenMalariaUtilities
 
 
 defineGVI_simple=function (baseList, vectorInterventionParameters, append = TRUE,
@@ -173,6 +311,12 @@ defineGVI_simple=function (baseList, vectorInterventionParameters, append = TRUE
   return(baseList)
 }
 
+
+###########################
+# Update decay parameters to include insecticide decay
+
+
+# function to refit weibull decay
 optimise_decay_param=function(param, insecticide, df){
   #if(param[3]<1){
   out=data.frame(
@@ -182,11 +326,10 @@ optimise_decay_param=function(param, insecticide, df){
     mutate(decay=param[3]*exp( -(time/(param[1]))^param[2] * log(2) ),
            diff=(decay-decay_obs)^2)%>%
     summarise(diff=sum(diff))
-  # } else {
-  #   out=Inf
-  # }
   return(out)
 }
+
+# function to refit hill decay
 optimise_decay_param_hill=function(param, insecticide){
   #if(param[3]<1){
   data.frame(
@@ -196,11 +339,10 @@ optimise_decay_param_hill=function(param, insecticide){
     mutate(decay=param[3] / (1 + (time/param[1])^param[2]),
            diff=(decay-decay_obs)^2)%>%
     summarise(diff=sum(diff))
-  # } else {
-  #   out=Inf
-  # }
+  return(out)
 }
 
+# optimisation routine to find decay parameters
 calculate_param=function(insecticide, opti_fun="weibull", df){
   opti_function=ifelse(opti_fun=="weibull", optimise_decay_param, optimise_decay_param_hill)
   opti=optim(c(0.448, 1.11, 0.7), opti_function, insecticide=insecticide, df=df , method = "L-BFGS-B", lower=c(0, 0, 0), upper = c(Inf, Inf, 1) )$par
@@ -210,33 +352,43 @@ calculate_param=function(insecticide, opti_fun="weibull", df){
   return(opti)
 }
 
-update_halflife_insecticideDecay=function(my_parameters_GVI, halflife, kappa, my_EHT, my_netType){
+
+# Update halflife of the net to include insecticide decay from EHT data
+update_halflife_insecticideDecay=function(my_parameters_GVI, halflife, kappa, my_EHT, my_netType, insecticide_decay){
   this.parameters_GVI=my_parameters_GVI%>%
-    filter(netType==my_netType, EHT==my_EHT)%>%
+    filter(netType %in% c(my_netType, "control"), EHT==my_EHT)%>%
     mutate(L_functionalSurvival=halflife,
            kappa_functionalSurvival=kappa)
   
-  df=data.frame(time=seq(0, 365*3))%>%
-    mutate( weibull=exp( -(time/halflife)^kappa * log(2) ))
-  
-  for(i in 1:nrow(this.parameters_GVI)){
-    this.line=this.parameters_GVI[i,]
+  if(insecticide_decay){
     
-    if(is.na(this.line$halflife_insecticide)){
-      this.parameters_GVI$final_hl[i]=halflife
-      this.parameters_GVI$final_kappa[i]=kappa
-    } else {
-      this.df=df %>% mutate(
-        linear= 1-time/this.line$halflife_insecticide,
-        ITNcov=weibull*linear, setting="test")
+    df=data.frame(time=seq(0, 365*3))%>%
+      mutate( weibull=exp( -(time/halflife)^kappa * log(2) ))
+    
+    for(i in 1:nrow(this.parameters_GVI)){
+      this.line=this.parameters_GVI[i,]
       
-      product_fit=calculate_param("test", opti_fun="weibull", df=this.df)
-      
-      this.parameters_GVI$final_hl[i]=round(product_fit$L, digits = 1)
-      this.parameters_GVI$final_kappa[i]=round(product_fit$k, digits = 1)
-      this.df=NULL
+      if(is.na(this.line$halflife_insecticide) | this.line$halflife_insecticide<0 ){
+        this.parameters_GVI$final_hl[i]=halflife
+        this.parameters_GVI$final_kappa[i]=kappa
+      } else {
+        this.df=df %>% mutate(
+          linear= 1-time/this.line$halflife_insecticide,
+          ITNcov=weibull*linear, setting="test")
+        
+        product_fit=calculate_param("test", opti_fun="weibull", df=this.df)
+        
+        this.parameters_GVI$final_hl[i]=round(product_fit$L, digits = 1)
+        this.parameters_GVI$final_kappa[i]=round(product_fit$k, digits = 1)
+        this.df=NULL
+      }
     }
+  } else{
+    this.parameters_GVI=this.parameters_GVI%>%
+      mutate(final_hl=halflife,
+             final_kappa=kappa)
   }
+
   return(this.parameters_GVI)
 }
 

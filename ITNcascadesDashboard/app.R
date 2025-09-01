@@ -4,6 +4,7 @@ library(shiny)
 library(bslib)
 library(tidyverse)
 library(AnophelesModel)
+library(cowplot)
 
 #setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 dirInputs="Inputs"
@@ -14,21 +15,9 @@ source("./cascade_functions.R")
 source("./compute_vectorialCapacity.R")
 source("./wrapper_cascade_functions.R")
 
-results_kibondo_w<- readRDS(file.path(dirInputs,"output_kibondo_washed.rds"))
-results_kibondo_unw<- readRDS(file.path(dirInputs,"output_kibondo_unwashed.rds"))
-
-results_bit055_w<- readRDS(file.path(dirInputs,"output_bit055_washed.rds"))
-results_bit055_unw<- readRDS(file.path(dirInputs,"output_bit055_unwashed.rds"))
-
-results_bit103_unw<- readRDS(file.path(dirInputs,"output_bit103_unwashed.rds"))
-results_bit103_w<- readRDS(file.path(dirInputs,"output_bit103_washed.rds"))
-
-results_bit059_w<- readRDS(file.path(dirInputs,"output_bit059_washed.rds"))
-results_bit059_unw<- readRDS(file.path(dirInputs,"output_bit059_unwashed.rds"))
-
-results_bit080_unw<- readRDS(file.path(dirInputs,"output_bit080_unwashed.rds"))
-results_bit080_w<- readRDS(file.path(dirInputs,"output_bit080_washed.rds"))
-
+all_results<- read.csv(file.path(dirInputs,"fitted_parameters_posteriormax.csv"))
+eht_description<- read.csv(file.path(dirInputs,"EHT_description.csv"))
+names(eht_description)=c("Experimental hut trial", "Location","Year","Mosquito species", "New generation ITNs", "Durability" )
 activity_patterns_Ref<- readRDS(file.path(dirInputs,"activity_patterns_withRefs_small.rds"))
 
 
@@ -46,7 +35,7 @@ ui <- page_navbar(
   
   
   
-  title = span(img(src = "logosmall.png"), "ITN effectiveness cascades"),
+  title = span(img(src = "logosmall.png"), "LLIN Effectiveness cascades"),
   #title = "LLIN Effectiveness cascades",
   # nav_panel(
   #   title = "Introduction", 
@@ -61,66 +50,83 @@ ui <- page_navbar(
     layout_sidebar(
       sidebar = sideBar_InputsCascade,
       navset_card_tab(
-         nav_panel(
+        nav_panel(
+          title = "Description",
+          p("This dashboard provides effectiveness cascades for two insecticide-treated nets, namely Interceptor G2 and Olyset Plus. 
+            Effectiveness is measured in terms of vectorial capacity reduction. 
+            The cascade enables the user to quantify the loss of effectiveness attributable to five factors, namely entomological efficacy, usage at distribution, functional survival, insecticidal durability and in-bed exposure (as defined in Definition tab).
+            The user can use the panel on the left-hand side to adapt the assumptions and tailor the results to their setting of interest."),
+          
+          p(strong("Interpreting the outcome:"),"Using the default assumptions, the effectiveness of Interceptor G2 nets was above 90% when only entomological efficacy was considered. It dropped below 60% when all other dimensions were included. In this example, the main factors responsible for the decline in effectiveness were in-bed exposure (responsible for a drop of 13 points), insecticidal durability (responsible for a drop of 12 points) and imperfect usage at distribution (responsible for a drop of 10 points)"),
+          p("A short summary of the assumptions and definitions is provided in the Assumption tab and all methodological details are available in the following manuscript"),
+          p( strong("Cascades of effectiveness of new-generation insecticide-treated nets against malaria, from entomological trials to real-life conditions")),
+          p("Clara Champagne, Jeanne Lemant, Alphonce Assenga, Ummi A. Kibondo, Ruth G. Lekundayo, Emmanuel Mbuba, Jason Moore, Joseph B. Muganga, Watson S. Ntabaliba, Olukayode G. Odufuwa, Johnson Kyeba Swai, Maria Alexa, Roland Goers, Monica Golumbeanu, Nakul Chitnis, Amanda Ross, Raphael N'Guessan, Sarah Moore, Emilie Pothin"),
+          p( strong("Contact:") , "clara.champagne@swisstph.ch")
+        ), 
+        
+        nav_panel(
            title = "LLIN cascades",
           layout_columns(
              card(card_header("Interceptor G2"),plotOutput(outputId = "IG2")),
-             card(card_header("OlysetPlus"),plotOutput(outputId = "OlysetPlus"))
+             card(card_header("Olyset Plus"),plotOutput(outputId = "OlysetPlus"))
         )
          ),
         nav_panel(
-          title = "Assumptions",
+          title = "Assumptions and definitions",
           navset_card_tab(
             nav_panel(
               title = "Assumptions",
               p("These dashboards are associated with the following manuscript ", strong("'Quantifying the effectiveness of new generation bed nets against malaria, from entomological trials to real life conditions'"), " to which the user should refer for methodological details.
-            The sources and assumptions underlying the parameter values are as follows:",
-                p(strong("Bednet use:"),"Proportion of the population sleeping under a bednet. Default values are estimated with usage data from" ,
-                  tags$a("Mosha et al. 2022", href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext" ), " and ",
-                  tags$a("Mosha et al. 2024", href="https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(23)00420-6/fulltext" )),
-                p(strong("Anopheles species:"), "Using bionomics (parous rate, human blood index, sac rate, endophily and endophagy) corresponding to the given species. 
-              Values are extracted from",
-                  tags$a("Golumbeanu et al. 2024", href="https://www.biorxiv.org/content/10.1101/2023.10.17.562838v1"),
+            The sources and assumptions underlying the default parameter values are as follows:",
+                p(strong("Entomological efficacy:"), "Capacity of a given vector control product to reduce mosquito transmission potential, through the alteration of mosquito biting, mortality and/or fecundity, under ideal operational conditions. It can be quantified as the relative reduction in vectorial capacity through deploying the vector control product under ideal operational conditions."),
+                p(strong("ITN effectiveness:"), "Capacity of a given ITN product to reduce mosquito transmission potential under user conditions. It differs from entomological efficacy in that insecticidal durability, functional survival, ITN use and in-bed exposure are also accounted for. It can be quantified as the relative reduction in vectorial capacity through deploying the ITN under realistic operational conditions."),
+                p(strong("Vectorial capacity:"), "Total number of potentially infectious bites originating from all the mosquitoes biting a single perfectly infectious (i.e. all mosquito bites result in infection) human on a single day. It represents the potential for a given mosquito population to transmit malaria."),
+                
+                p(strong("EHT:"), "Experimental hut trial dataset used to estimate entomological efficacy. Characteristics of the different EHT included are displayed on the subsequent tab."),
+                p(strong("ITN use:"),"Proportion of the population sleeping under a net the previous night. Default values are estimated with usage data from" ,
+                  tags$a("Mosha et al. 2022", href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext", target="_blank" ), " and ",
+                  tags$a("Mosha et al. 2024", href="https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(23)00420-6/fulltext", target="_blank" )),
+                p(strong("Functional survival:"), "An estimate of the physical lifespan of an ITN product in the field. It is measured as an ITN that is present in use and in serviceable condition.
+                It is the result of the ITN's physical integrity declining due to damage and attrition, that results in nets being discarded when the user no longer regards them as useful.
+                  It is represented with a Weibull function with user-specific half-life and shape parameters. Default values are estimated with usage data from" ,
+                  tags$a("Mosha et al. 2022", href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext", target="_blank" ), " and ",
+                  tags$a("Mosha et al. 2024", href="https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(23)00420-6/fulltext" , target="_blank"),
+                  ".
+                  In practice, for other settings, online tools (e.g.", tags$a("ITN Quantification", href="https://allianceformalariaprevention.com/itn-quantification/", target="_blank" ) ,") are available to estimate functional survival and ITN needs over time using survey data and stock-and-flow models (",
+                  tags$a("Bertozzi-Villa et al. 2021", href="https://www.nature.com/articles/s41467-021-23707-7", target="_blank" ), 
+                  tags$a("Koenker et al. 2023", href="https://malariajournal.biomedcentral.com/articles/10.1186/s12936-023-04609-z", target="_blank" ),")."),
+                p(strong("Anopheles bionomics:"), "Parous rate, human blood index, sac rate and endophagy in the model correspond to the values for the chosen species (default is Anopheles gambiae). 
+              Values are extracted from ",
+                  tags$a("Golumbeanu et al. 2024", href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011609", target="_blank"),
                   "via",
-                  tags$a("AnophelesModel", href="https://github.com/SwissTPH/AnophelesModel")),
+                  tags$a("AnophelesModel", href="https://github.com/SwissTPH/AnophelesModel", target="_blank"), "and",
+                  tags$a("AnophelesBionomics", href="https://github.com/SwissTPH/AnophelesBionomics", target="_blank")),
+                p(strong("Insecticidal durability:"), "Retention of insecticidal efficacy of the ITN. It is estimated as the difference in entomological efficacy between unwashed/new ITNs and 20-times washed/field-aged ITNs in EHTs."),
+                p(strong("In-bed exposure:"), "'The proportion of vector bites occurring indoors during sleeping hours, for an unprotected individual, which represents the maximum possible personal protection any intervention targeting sleeping spaces could provide' (",
+                  tags$a("Monroe et al. 2020", href="https://doi.org/10.1186/s12936-020-03271-z", target="_blank" ),"). It is calculated by combining activity patterns for humans and mosquitoes as in",
+                  tags$a("Golumbeanu et al. 2024", href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011609", target="_blank")),
                 p(strong("Activity patterns:"), "Using activity rhythm data averaged for the chosen country (default: Tanzania). For vector data, all available species and surveys are averaged. For human data, all available surveys are averaged.
               Values are extracted from",
-                  tags$a("Golumbeanu et al. 2024", href="https://www.biorxiv.org/content/10.1101/2023.10.17.562838v1"),
+                  tags$a("Golumbeanu et al. 2024", href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011609", target="_blank"),
                   "via",
-                  tags$a("AnophelesModel", href="https://github.com/SwissTPH/AnophelesModel"), "The data is displayed on the subsequent tabs."),
-                p(strong("EHT:"), "Experimental hut trial dataset used to estimate entomological efficacy"),
-                p(strong("Attrition  (half life, in years):"), "Time until which less than half of the originally covered population are still using a bednet (assuming a Weibull function). Default values are estimated with usage data from" ,
-                  tags$a("Mosha et al. 2022", href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext" ), " and ",
-                  tags$a("Mosha et al. 2024", href="https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(23)00420-6/fulltext" )),
-                p(strong("Attrition  (shape):"), "Shape parameter of the Weibull distribution specified above. Default values are estimated with usage data from" ,
-                  tags$a("Mosha et al. 2022", href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(21)02499-5/fulltext" ), " and ",
-                  tags$a("Mosha et al. 2024", href="https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(23)00420-6/fulltext" )),
+                  tags$a("AnophelesModel", href="https://github.com/SwissTPH/AnophelesModel", target="_blank"), ". The data is displayed on the subsequent tab."),
             )
             ),
             nav_panel(
-              title = "Activity patterns IG2",
-              plotOutput(outputId = "plot_rhythms_ig2")
+              title = "Experimental hut trial data",
+              #plotOutput(outputId = "plot_rhythms")
+              dataTableOutput(outputId = "EHTtable")
             ),
             nav_panel(
-              title = "Activity patterns OlysetPlus",
-              plotOutput(outputId = "plot_rhythms_pbo")
+            title = "Activity patterns",
+            plotOutput(outputId = "plot_rhythms")
             )
-          )#
-
-        ),
-        nav_spacer(),
-        nav_panel(
-            title = "About",
-            p("This dashboard is related to the following manuscript"),
-            p( strong("Cascades of effectiveness of new-generation insecticide-treated nets against malaria, from entomological trials to real-life conditions")),
-p("Clara Champagne, Jeanne Lemant, Alphonce Assenga, Ummi A. Kibondo, Ruth G. Lekundayo, Emmanuel Mbuba, Jason Moore, Joseph B. Muganga, Watson S. Ntabaliba, Olukayode G. Odufuwa, Johnson Kyeba Swai, Maria Alexa, Roland Goers, Monica Golumbeanu, Nakul Chitnis, Amanda Ross, Sarah Moore, Emilie Pothin"),
-p( strong("Contact:") , "clara.champagne@swisstph.ch")
-          )
+        
         )
         
-    
+        )
     )
-  #  )
+   )
   
   
 )
@@ -135,10 +141,8 @@ server <- function(input, output, session) {
     updateSelectInput(session, "rhythms_mosq_ig2", selected = "Tanzania")
     updateNumericInput(session, "usage_ig2", value = 0.69)
     updateNumericInput(session, "attrition_ig2", value = 2.4)
-    updateNumericInput(session, "attrition_shape_ig2", value = 1.9)
-    updateSelectInput(session, "EHT_ig2", selected = "BIT103")
-    
-
+    updateNumericInput(session, "attrition_shape_ig2", value = 2.4)
+    updateSelectInput(session, "EHT_ig2", selected = "Martin et al., An. gambiae")
   })
   
   observeEvent(input$reset_default_pbo, {
@@ -147,17 +151,46 @@ server <- function(input, output, session) {
     updateSelectInput(session, "rhythms_mosq_pbo", selected = "Tanzania")
     updateNumericInput(session, "usage_pbo", value = 0.75)
     updateNumericInput(session, "attrition_pbo", value = 1.7)
-    updateNumericInput(session, "attrition_shape_pbo", value = 0.8)
-    updateSelectInput(session, "EHT_pbo", selected = "BIT103")
-    
-    
-    
+    updateNumericInput(session, "attrition_shape_pbo", value = 1.9)
+    updateSelectInput(session, "EHT_pbo", selected = "Martin et al., An. gambiae")
   })
+  
+  observeEvent(input$set_pbo_as_IG2, {
+    updateSelectInput(session, "species_pbo", selected = input$species_ig2)
+    updateSelectInput(session, "rhythms_hu_pbo", selected = input$rhythms_hu_ig2)
+    updateSelectInput(session, "rhythms_mosq_pbo", selected = input$rhythms_mosq_ig2)
+    updateNumericInput(session, "usage_pbo", value = input$usage_ig2)
+    updateNumericInput(session, "attrition_pbo", value = input$attrition_ig2)
+    updateNumericInput(session, "attrition_shape_pbo", value = input$attrition_shape_ig2)
+  })
+  
+  observeEvent(input$set_IG2_as_pbo, {
+    updateSelectInput(session, "species_ig2", selected = input$species_pbo)
+    updateSelectInput(session, "rhythms_hu_ig2", selected = input$rhythms_hu_pbo)
+    updateSelectInput(session, "rhythms_mosq_ig2", selected = input$rhythms_mosq_pbo)
+    updateNumericInput(session, "usage_ig2", value = input$usage_pbo)
+    updateNumericInput(session, "attrition_ig2", value = input$attrition_pbo)
+    updateNumericInput(session, "attrition_shape_ig2", value = input$attrition_shape_pbo)
+  })
+  
+    is_pbo_notas_ig2 <- eventReactive(eventExpr = input$update_pbo,
+                                     ignoreNULL = F,
+                                     {
+                                       return(input$rhythms_hu_ig2 != input$rhythms_hu_pbo | input$rhythms_mosq_ig2!=input$rhythms_mosq_pbo )                         
+                                       
+                                     })
+  
+  is_ig2_notas_pbo <- eventReactive(eventExpr = input$update_ig2,
+                                 ignoreNULL = F,
+                                 {
+                                   return(input$rhythms_hu_ig2 != input$rhythms_hu_pbo | input$rhythms_mosq_ig2!=input$rhythms_mosq_pbo )                         
+                                   
+                                 })
   ################
   # Cascade IG2
  
   
- select_rythms_ig2 <- eventReactive(eventExpr = input$update_ig2,
+select_rythms_ig2 <- eventReactive(eventExpr = input$update_ig2,
                                     ignoreNULL = F,
                                     {
                                       return(rhythms_function(country_hu=input$rhythms_hu_ig2, country_mosq = input$rhythms_mosq_ig2,
@@ -174,32 +207,16 @@ cascade_ig2 <- eventReactive(eventExpr = input$update_ig2,
                              host_table_ig2=host_table
                              host_table_ig2$species_name = input$species_ig2
                              host_params_ig2 = def_host_params(mosquito_species = input$species_ig2, vec_params = ent_params_ig2, host_table = host_table_ig2, verbose = FALSE)
-                             #activity_ig2=rhythms_function(country_hu=input$rhythms_hu_ig2, country_mosq = input$rhythms_mosq_ig2)                          
-                             activity_ig2=activity_function(select_rythms_ig2()$my_rhythms_mean)                          
+                             activity_ig2=activity_function(select_rythms_ig2()$my_rhythms_mean,species=input$species_ig2)                          
                              
-                             
-                             if(input$EHT_ig2=="Kibondo"){
-                               my_results_unw=results_kibondo_unw
-                               my_results_w=results_kibondo_w
-                               my_insecticide_id=2
-                             } else if (input$EHT_ig2=="BIT103"){
-                               my_results_unw=results_bit103_unw
-                               my_results_w=results_bit103_w
-                               my_insecticide_id=3
-                             } else if (input$EHT_ig2=="BIT080"){
-                               my_results_unw=results_bit080_unw
-                               my_results_w=results_bit080_w
-                               my_insecticide_id=2
-                             }
-                             
+                             outputs_posteriormax = all_results[(all_results$reference==input$EHT_ig2 & all_results$netType=="Interceptor G2"),]
                              VCreduc_all=run_anophelesModelforCascade(ent_params=ent_params_ig2,
                                                                       host_params=host_params_ig2,
-                                                          activity_p=activity_ig2 , activity_noRhythms=activity_noRhythms,
-                                                          results=my_results_unw, results_washed=my_results_w, 
-                                                          usage=input$usage_ig2, 
-                                                          insecticide_id=my_insecticide_id, 
+                                                          outputs_posteriormax=outputs_posteriormax,
+                                                          activity_noRhythms=activity_noRhythms,usage=input$usage_ig2, exposure=activity_ig2,
                                                           attrition=input$attrition_ig2, kappa_attrition=input$attrition_shape_ig2)        
                              
+                             #print(VCreduc_all)
                              return(VCreduc_all)
                            })
   
@@ -214,11 +231,8 @@ cascade_ig2 <- eventReactive(eventExpr = input$update_ig2,
   })
   
   
-  output$plot_rhythms_ig2 <- renderPlot({
-    
-    rhythms_function_plot(select_rythms_ig2()$my_rhythms, select_rythms_ig2()$my_rhythms_mean)
-    
-  })
+
+  
   ################
   # Cascade OlysetPlus
  
@@ -229,6 +243,9 @@ cascade_ig2 <- eventReactive(eventExpr = input$update_ig2,
                                                                my_activity_patterns=activity_patterns_Ref) )                         
                                        
                                      })
+  
+
+  
  cascade_pbo <- eventReactive(eventExpr = input$update_pbo,
                               ignoreNULL = F,
                               {
@@ -237,30 +254,14 @@ cascade_ig2 <- eventReactive(eventExpr = input$update_ig2,
                                 host_table_pbo=host_table
                                 host_table_pbo$species_name = input$species_pbo
                                 host_params_pbo = def_host_params(mosquito_species = input$species_pbo, vec_params = ent_params_pbo, host_table = host_table_pbo, verbose = FALSE)
-                                #activity_pbo=rhythms_function(country_hu=input$rhythms_hu_pbo, country_mosq = input$rhythms_mosq_pbo)                          
-                                activity_pbo=activity_function(select_rythms_pbo()$my_rhythms_mean)                          
+                                activity_pbo=activity_function(select_rythms_pbo()$my_rhythms_mean,species=input$species_pbo)                          
                                 
-                                
-                                if(input$EHT_pbo=="BIT055"){
-                                  my_results_unw=results_bit055_unw
-                                  my_results_w=results_bit055_w
-                                  my_insecticide_id=2
-                                } else if(input$EHT_pbo=="Odufuwa"){
-                                  my_results_unw=results_bit059_unw
-                                  my_results_w=results_bit059_w
-                                  my_insecticide_id=2
-                                } else if(input$EHT_pbo=="BIT103"){
-                                  my_results_unw=results_bit103_unw
-                                  my_results_w=results_bit103_w
-                                  my_insecticide_id=2
-                                }
+                                outputs_posteriormax = all_results[(all_results$reference==input$EHT_pbo & all_results$netType=="Olyset Plus"),]
                                 
                                 VCreduc_all=run_anophelesModelforCascade(ent_params=ent_params_pbo,
                                                                          host_params=host_params_pbo,
-                                                                         activity_p=activity_pbo , activity_noRhythms=activity_noRhythms,
-                                                                         results=my_results_unw, results_washed=my_results_w, 
-                                                                         usage=input$usage_pbo, 
-                                                                         insecticide_id=my_insecticide_id, 
+                                                                         outputs_posteriormax=outputs_posteriormax,
+                                                                         activity_noRhythms=activity_noRhythms,usage=input$usage_pbo, exposure=activity_pbo,
                                                                          attrition=input$attrition_pbo, kappa_attrition=input$attrition_shape_pbo)        
                                 
                                 return(VCreduc_all)
@@ -276,13 +277,30 @@ cascade_ig2 <- eventReactive(eventExpr = input$update_ig2,
     #  }
     
   })
+
   
-  output$plot_rhythms_pbo <- renderPlot({
+  ################
+  # Activity patterns
+  
+  
+  output$plot_rhythms <- renderPlot({
     
-    rhythms_function_plot(select_rythms_pbo()$my_rhythms, select_rythms_pbo()$my_rhythms_mean)
+    if(is_pbo_notas_ig2() | is_ig2_notas_pbo()){
+      plot_grid(
+        rhythms_function_plot(select_rythms_ig2()$my_rhythms, select_rythms_ig2()$my_rhythms_mean)+
+          guides(color=guide_legend(nrow=3)),
+        rhythms_function_plot(select_rythms_pbo()$my_rhythms, select_rythms_pbo()$my_rhythms_mean)+
+          guides(color=guide_legend(nrow=3)),
+        labels=c("Interceptor G2","Olyset Plus"), scale = 0.9
+      )
+    } else{
+      rhythms_function_plot(select_rythms_ig2()$my_rhythms, select_rythms_ig2()$my_rhythms_mean)
+    }
     
   })
 
+  output$EHTtable <-renderDataTable(eht_description,
+                                    options = list(searching = FALSE))
   
 }
 

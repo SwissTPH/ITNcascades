@@ -13,15 +13,15 @@ plot_bars_effectiveness_LLIN      <- function(df_VCred, colorfinal="dodgerblue")
     )
   
   bars_df$value[bars_df$variable %in% c("effectiveness")]=NA
-  bars_df$variable=factor(bars_df$variable, levels=c("bites", "Efficacy","EfficacyAttrition",
+  bars_df$variable=factor(bars_df$variable, levels=c("bites", "Efficacy","EfficacyUsage",
                                                      "EfficacyAttritionUsage","EfficacyAttritionUsageDecay","EfficacyAttritionUsageDecayRhythms",
                                                      "effectiveness"),
-                          labels=c("Perfect\nvector control",
+                          labels=c("No\nvectors",
                                    "Entomological\nefficacy",
+                                   "Usage\nat distribution",
                                    "Functional\nsurvival",
-                                   "Imperfect\nusage",
-                                   "Insecticide\ndecay",
-                                   "Activity\nrhythms",
+                                   "Insecticidal\ndurability",
+                                   "In-bed\nexposure",
                                    "Effectiveness"))
   bars_df$point_difference=round(bars_df$background_value-bars_df$value)
   
@@ -42,15 +42,15 @@ plot_bars_effectiveness_LLIN      <- function(df_VCred, colorfinal="dodgerblue")
               position = position_stack(vjust = 0.15),
     ) +
     scale_y_continuous(label=function(x) paste0(x, "%")) +
-    labs(y="",
-         x="Reduction in vectorial capacity") +
+    labs(x="",
+         y="Reduction in vectorial capacity") +
     theme_classic()
   
   my_plot=bars_background +
     geom_col(mapping = aes(variable, value),
              fill = "lightgrey",
              color= "black") +
-    geom_text(data = bars_df %>% filter(variable !="Perfect\nvector control" & variable != "Effectiveness"),
+    geom_text(data = bars_df %>% filter(variable !="No\nvectors" & variable != "Effectiveness"),
               mapping = aes(
                 variable, value,
                 #label = percent %>% round() %>% paste0("%\nless")
@@ -58,7 +58,7 @@ plot_bars_effectiveness_LLIN      <- function(df_VCred, colorfinal="dodgerblue")
               ),
               position = position_stack(vjust = 0.15),
     ) +
-    geom_label(data = bars_df %>% filter(variable !="Perfect\nvector control" & variable != "Effectiveness"),
+    geom_label(data = bars_df %>% filter(variable !="No\nvector" & variable != "Effectiveness"),
                mapping = aes(
                  variable,
                  label = paste0("-",point_difference,"pts"),

@@ -24,7 +24,8 @@ fit_EHT_multinomial_stan=function(data,iter = 6000,
          "InitialRepellencyRate",
          "InitialPreprandialkillingEfficacy",
          "alpha_0",
-         "mu_0")
+         "mu_0",
+         "pc_0")
   gen_inits <- function() {
     list=list(
       InitialPostprandialkillingEfficacy = runif(nb_treat,0,1),
@@ -51,7 +52,7 @@ fit_EHT_multinomial_stan=function(data,iter = 6000,
 
 
 
-get_IRSmodel_summary_output=function(results,
+get_stan_summary_output=function(results,
                                      decay="weibull",
                                      save=FALSE,
                                      path=NULL, data) {
@@ -90,3 +91,62 @@ get_IRSmodel_summary_output=function(results,
   
   return(summary_outputs)
 }
+
+
+###############################
+# extract_stan_posteriormax
+#' @title extract_stan_posteriormax
+#'
+#' @description  \code{extract_stan_uncertainty}
+#' Extract a sample of posterior values from stan output
+#'
+#' @param res stanfit file containing your stan results
+#'
+#' @return a list of interventions
+#'
+#' @export
+extract_stan_posteriormax <- function(res, data=NULL){
+  
+  
+  mypars=c("InitialPostprandialkillingEfficacy",
+           "InitialPreprandialkillingEfficacy",
+           "InitialRepellencyRate",
+           "KillingDuringHostSeeking",
+           "alpha_0", "mu_0", "lp__")
+  
+  fit_extract <- rstan::extract(res, pars=mypars, inc_warmup = FALSE)
+  
+  id_MAP=which.max(fit_extract$lp__)
+  full_df_extract=data.frame(sample=id_MAP)
+  for(ii in 1:4){
+    mydf=as.data.frame(t(fit_extract[[ii]][id_MAP,]))
+    names(mydf)=paste0(mypars[[ii]], "_", 1:ncol(mydf))
+    full_df_extract=cbind(full_df_extract,mydf )
+  }
+  
+  for(ii in 5:6){
+    mydf=as.data.frame(t(fit_extract[[ii]][id_MAP]))
+    names(mydf)=paste0(mypars[[ii]], "_", 0)
+    full_df_extract=cbind(full_df_extract,mydf )
+  }
+  
+  new_output=full_df_extract %>%
+    tidyr::pivot_longer(cols=names(full_df_extract)[-1], names_to = "param", values_to = "value")%>%
+    mutate(param=ifelse(str_detect( param,"_0_0"), gsub("_0_0", "_0", param), param))%>%
+    tidyr::separate(param, sep="_" ,into =c( "param" ,"treatment"))%>%
+    mutate(treatment=as.numeric(treatment)-1)%>%
+    filter(treatment!=0)
+  
+  if(!is.null(data)){
+    new_output=new_output  %>%
+    dplyr::left_join(unique(data %>% dplyr::select(insecticide_name, treatment)))
+  }
+  new_output$param[new_output$param=="InitialRepellencyRate"]="InitialRepellentEfficacy"
+  new_output$param[new_output$param=="alpha"]="alpha_0"
+  new_output$param[new_output$param=="mu"]="mu_0"
+  
+  return(new_output)
+}
+
+
+

@@ -10,11 +10,11 @@ functions{
   real P_UD(real alpha, real mu){
     return (1-P_UA(alpha, mu))*mu /(alpha +mu);
   }
-  real P_FA(real alpha, real mu, real pC){
-    return (P_F(alpha, mu)*pC);
+  real P_FA(real alpha, real mu, real PB){
+    return (P_F(alpha, mu)*PB);
   }
-  real P_FD(real alpha, real mu, real pC){
-    return (P_F(alpha, mu)*(1-pC));
+  real P_FD(real alpha, real mu, real PB){
+    return (P_F(alpha, mu)*(1-PB));
   }
   
 }
@@ -43,7 +43,7 @@ functions{
 
 transformed parameters{
   // declare: control rates
-  real<lower=0, upper=1> pC_k0;
+  real<lower=0, upper=1> pB_k0;
   real<lower=0> alpha_k0;
   real<lower=0> mu_k0;
   
@@ -51,7 +51,7 @@ transformed parameters{
   // define: control rates
   alpha_k0 = exp(a);
   mu_k0 = exp(m);
-  pC_k0 = inv_logit(b);
+  pB_k0 = inv_logit(b);
 }
 
 
@@ -78,16 +78,16 @@ model{
     if (treat[i]==0) {
       theta[1,i] = (P_UA(alpha_k0, mu_k0));
       theta[2,i] = (P_UD(alpha_k0, mu_k0));
-      theta[3,i] = (P_FA(alpha_k0, mu_k0, pC_k0));
-      theta[4,i] = (P_FD(alpha_k0, mu_k0, pC_k0));
+      theta[3,i] = (P_FA(alpha_k0, mu_k0, pB_k0));
+      theta[4,i] = (P_FD(alpha_k0, mu_k0, pB_k0));
     }
     else{
       theta[1,i] = (P_UA((1 -InitialRepellencyRate[treat[i]+1])*alpha_k0, mu_k0 + KillingDuringHostSeeking[treat[i]+1] * alpha_k0));
       theta[2,i] = (P_UD((1 -InitialRepellencyRate[treat[i]+1])*alpha_k0,  mu_k0 + KillingDuringHostSeeking[treat[i]+1] * alpha_k0));
-      theta[3,i] = (P_FA((1 -InitialRepellencyRate[treat[i]+1])*alpha_k0,  mu_k0 + KillingDuringHostSeeking[treat[i]+1] * alpha_k0, pC_k0*(1-InitialPostprandialkillingEfficacy[treat[i]+1])));
-      theta[4,i] = (P_FD((1 -InitialRepellencyRate[treat[i]+1])*alpha_k0,  mu_k0 + KillingDuringHostSeeking[treat[i]+1] * alpha_k0, pC_k0*(1-InitialPostprandialkillingEfficacy[treat[i]+1])));
+      theta[3,i] = (P_FA((1 -InitialRepellencyRate[treat[i]+1])*alpha_k0,  mu_k0 + KillingDuringHostSeeking[treat[i]+1] * alpha_k0, pB_k0*(1-InitialPostprandialkillingEfficacy[treat[i]+1])));
+      theta[4,i] = (P_FD((1 -InitialRepellencyRate[treat[i]+1])*alpha_k0,  mu_k0 + KillingDuringHostSeeking[treat[i]+1] * alpha_k0, pB_k0*(1-InitialPostprandialkillingEfficacy[treat[i]+1])));
     }
-    target += multinomial_lpmf( y[i,] |theta[,i]);
+    //target += multinomial_lpmf( y[i,] |theta[,i]);
   }
   
   
@@ -99,19 +99,17 @@ generated quantities {
   
   // declare: means of rates
   real<lower=0> alpha_0; //
-  real<lower=0> mu_0; //
-  real<lower=0, upper =1> pc_0; //
-  vector<lower=0>[tr+1] alpha_i; //
-  vector<lower=0>[tr+1] mu_i; //
-  real<lower=0, upper=1> PSc; //
-  vector<lower=0, upper=1>[tr+1] PS; //
+    real<lower=0> mu_0; //
+    vector<lower=0>[tr+1] alpha_i; //
+    vector<lower=0>[tr+1] mu_i; //
+    real<lower=0, upper=1> PSc; //
+    vector<lower=0, upper=1>[tr+1] PS; //
     
     //transform: means of rates
   alpha_0 = exp(a );
   mu_0 = exp(m );
-  pc_0 = inv_logit(b);
   alpha_i = (1 -InitialRepellencyRate) *alpha_0;
-  mu_i = mu_0 + KillingDuringHostSeeking * alpha_0;
+  mu_i = mu_0 + KillingDuringHostSeeking * alpha_k0;
   PSc=1-((1-exp(-alpha_0-mu_0))*mu_0/(alpha_0+mu_0));
   
   InitialPreprandialkillingEfficacy[1]=0;

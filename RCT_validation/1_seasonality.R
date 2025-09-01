@@ -12,8 +12,10 @@ library(raster)
 library(dplyr)
 library(reshape2)
 library(ggplot2)
+library(tidyr)
 
 output_dir=""
+shp_dir="" # directory with downloaded shapefiles
 
 #####################
 # Extract CHIRPS data for Mosha trial (Misungwi)
@@ -107,4 +109,74 @@ rbind( seasons_chirps_muleba)%>%
   theme_minimal()+
   scale_color_manual(values=c( "black"), name="")
 ggsave(file.path(output_dir, "muleba_chirps_average1417.png"))
+
+
+
+###############################################################################################################
+###############################################################################################################
+#  Uganda, Staedke trial
+
+shp_UGA=shapefile(file.path(shp_dir,"gadm41_UGA_0.shp"))
+
+#shp_UGA=getData('GADM', country='UGA', level=2)
+set.seed(1234)
+tp_point_uganda <- st_sample(st_as_sf(shp_UGA), 100)
+tp_point_uganda <- st_as_sf(tp_point_uganda)
+dat_uganda <- get_chirps(tp_point_uganda,
+                         dates = c("2017-01-01","2019-12-31"), 
+                         server = "ClimateSERV")
+
+
+# CHIRPS 2014-2016 (for Protopopoff trial)
+seasonality_uganda=get_seasonality_chirps(dat_uganda)
+write.csv(seasonality_uganda, file.path(output_dir, "seasonality_Uganda.csv"), row.names = FALSE)
+
+
+##########################################
+# format all datasets similarly for plotting
+
+seasons_chirps_uganda=seasonality_uganda %>% pivot_longer(cols=starts_with("m"),names_to = "month",values_to="intensity",names_prefix = "m") %>%
+  mutate(month=as.numeric(month), dataset="CHIRPS (2017-2019)") 
+
+rbind( seasons_chirps_uganda)%>%
+  ggplot()+
+  geom_line(aes(x=month,y=intensity, color=dataset))+
+  theme_minimal()+
+  scale_color_manual(values=c( "black"), name="")
+ggsave(file.path(output_dir, "uganda_chirps_average1719.png"))
+
+
+###############################################################################################################
+###############################################################################################################
+#  Zou department, Accrombessi trial
+
+shp_BEN=shapefile(file.path(shp_dir,"ben_admbnda_adm1_1m_salb_20190816.shp"))
+#shp_BEN=getData('GADM', country='BEN', level=2)
+shp_Zou=subset(shp_BEN, adm1_name=="Zou")
+
+set.seed(1234)
+tp_point_zou <- st_sample(st_as_sf(shp_Zou), 10)
+tp_point_zou <- st_as_sf(tp_point_zou)
+dat_zou <- get_chirps(tp_point_zou,
+                         dates = c("2019-01-01","2023-12-31"), 
+                         server = "ClimateSERV")
+
+
+# CHIRPS 2014-2016 (for Protopopoff trial)
+seasonality_zou=get_seasonality_chirps(dat_zou)
+write.csv(seasonality_zou, file.path(output_dir, "seasonality_Zou.csv"), row.names = FALSE)
+
+
+##########################################
+# format all datasets similarly for plotting
+
+seasons_chirps_zou=seasonality_zou %>% pivot_longer(cols=starts_with("m"),names_to = "month",values_to="intensity",names_prefix = "m") %>%
+  mutate(month=as.numeric(month), dataset="CHIRPS (2019-2023)") 
+
+rbind( seasons_chirps_zou)%>%
+  ggplot()+
+  geom_line(aes(x=month,y=intensity, color=dataset))+
+  theme_minimal()+
+  scale_color_manual(values=c( "black"), name="")
+ggsave(file.path(output_dir, "zou_chirps_average1923.png"))
 
