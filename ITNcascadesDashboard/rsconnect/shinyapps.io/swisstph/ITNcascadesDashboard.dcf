@@ -5,7 +5,7 @@ account: swisstph
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14321391
-bundleId: 10865617
+bundleId: 10867137
 url: https://swisstph.shinyapps.io/ITNcascadesDashboard/
 version: 1
 asMultiple: FALSE

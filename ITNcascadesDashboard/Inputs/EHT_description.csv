@@ -1,11 +1,11 @@
-"Experimental hut trial","Location","Year","Mosquito species","New generation ITNs","Durability"
-"Assenga et al. 2025","Tanzania (Ifakara, Morogoro)","Sept-Oct 2023","Anopheles arabiensis","Interceptor G2, Olyset Plus","Unwashed and 20x washed"
-"Kibondo et al. 2022","Tanzania (Ifakara, Morogoro)","Feb-Mar 2021","Anopheles arabiensis","Interceptor G2","Unwashed and 20x washed"
-"BIT080","Tanzania (Ifakara, Morogoro)","Apr-May 2023","Anopheles arabiensis","Interceptor G2 ","Unwashed and 20x washed"
-"BIT055","Tanzania (Ifakara, Morogoro)","Nov-Dec 2020","Anopheles arabiensis","Olyset Plus","Unwashed and 20x washed"
-"Odufuwa et al.","Tanzania (Bagamoyo, Pwani)","Sept-Oct 2020","Anopheles arabiensis","Olyset Plus","Unwashed and 20x washed"
-"Martin et al.","Tanzania (Magu, Mwanza)","May 2020- Dec 2022","Anopheles gambiae s.l.","Interceptor G2, Olyset Plus","New and field-aged (after 36 months)"
-"Martin et al.","Tanzania (Magu, Mwanza)","May 2020- Dec 2022","Anopheles funestus","Interceptor G2, Olyset Plus","New and field-aged (after 36 months)"
-"Assenga et al. 2025","Cote d Ivoire","","Anopheles gambiae s.l.","Interceptor G2, Olyset Plus","Unwashed and 20x washed"
-"Nguessan et al. 2016","Benin (Cove, Zou)","","Anopheles gambiae s.l.","Interceptor G2","Unwashed and 20x washed"
-"Sovegnon et al. 2024 (trial 2)","Benin (Za-Kpota, Zou)","Oct-Nov 2021","Anopheles gambiae s.l.","Interceptor G2","New and field-aged (after 24 months)"
+Experimental hut trial,Location,Year,Mosquito species,New generation ITNs,Durability
+Assenga et al. 2025,"Tanzania (Ifakara, Morogoro)",Sept-Oct 2023,Anopheles arabiensis,"Interceptor G2, Olyset Plus",Unwashed and 20x washed
+Kibondo et al. 2022,"Tanzania (Ifakara, Morogoro)",Feb-Mar 2021,Anopheles arabiensis,Interceptor G2,Unwashed and 20x washed
+BIT080,"Tanzania (Ifakara, Morogoro)",Apr-May 2023,Anopheles arabiensis,Interceptor G2 ,Unwashed and 20x washed
+BIT055,"Tanzania (Ifakara, Morogoro)",Nov-Dec 2020,Anopheles arabiensis,Olyset Plus,Unwashed and 20x washed
+Odufuwa et al.,"Tanzania (Bagamoyo, Pwani)",Sept-Oct 2020,Anopheles arabiensis,Olyset Plus,Unwashed and 20x washed
+Martin et al.,"Tanzania (Magu, Mwanza)",May 2020- Dec 2022,Anopheles gambiae s.l.,"Interceptor G2, Olyset Plus",New and field-aged (after 36 months)
+Martin et al.,"Tanzania (Magu, Mwanza)",May 2020- Dec 2022,Anopheles funestus,"Interceptor G2, Olyset Plus",New and field-aged (after 36 months)
+Assenga et al. 2025,Cote d Ivoire,May-July 2023,Anopheles gambiae s.l.,"Interceptor G2, Olyset Plus",Unwashed and 20x washed
+Nguessan et al. 2016,"Benin (Cove, Zou)",Apr-July 2015,Anopheles gambiae s.l.,Interceptor G2,Unwashed and 20x washed
+Sovegnon et al. 2024 (trial 2),"Benin (Za-Kpota, Zou)",Oct-Nov 2021,Anopheles gambiae s.l.,Interceptor G2,New and field-aged (after 24 months)
