@@ -16,7 +16,7 @@ plot_bars_effectiveness_LLIN      <- function(df_VCred, colorfinal="dodgerblue")
   bars_df$variable=factor(bars_df$variable, levels=c("bites", "Efficacy","EfficacyUsage",
                                                      "impacts_EfficacyUsageAttrition","EfficacyAttritionUsageDecay","EfficacyAttritionUsageDecayRhythms",
                                                      "effectiveness"),
-                          labels=c("No\nvectors",
+                          labels=c("Perfect\nvector control\n(theoretical)",
                                    "Entomological\nefficacy",
                                    "Usage at\ndistribution",
                                    "Functional\nsurvival",
@@ -50,7 +50,7 @@ plot_bars_effectiveness_LLIN      <- function(df_VCred, colorfinal="dodgerblue")
     geom_col(mapping = aes(variable, value),
              fill = "lightgrey",
              color= "black") +
-    geom_text(data = bars_df %>% filter(variable !="No\nvectors" & variable != "Effectiveness"),
+    geom_text(data = bars_df %>% filter(variable !="Perfect\nvector control\n(theoretical)" & variable != "Effectiveness"),
               mapping = aes(
                 variable, value,
                 #label = percent %>% round() %>% paste0("%\nless")
@@ -58,7 +58,7 @@ plot_bars_effectiveness_LLIN      <- function(df_VCred, colorfinal="dodgerblue")
               ),
               position = position_stack(vjust = 0.15),
     ) +
-    geom_label(data = bars_df %>% filter(variable !="No\nvectors" & variable != "Effectiveness"),
+    geom_label(data = bars_df %>% filter(variable !="Perfect\nvector control\n(theoretical)" & variable != "Effectiveness"),
                mapping = aes(
                  variable, #value,
                  label = paste0("-",point_difference,"pts"),
@@ -88,7 +88,7 @@ plot_bars_effectiveness_LLIN_uncertainty      <- function(df_VCred, colorfinal="
                                                      "EfficacyAttritionUsage","EfficacyAttritionUsageDecay",
                                                      "EfficacyAttritionUsageDecayRhythms",
                                                      "effectiveness"),
-                          labels=c("No\nvectors",
+                          labels=c("Perfect\nvector control\n(theoretical)",
                                    "Entomological\nefficacy",
                                    "Usage at\ndistribution",
                                    "Functional\nsurvival",
@@ -124,8 +124,8 @@ plot_bars_effectiveness_LLIN_uncertainty      <- function(df_VCred, colorfinal="
              fill = "lightgrey",
              color= "black") +
     geom_errorbar(mapping = aes(x=variable, ymin=q025*100, ymax=q975*100),
-             color= "grey27", width = 0.2) +
-    geom_text(data = bars_df %>% filter(variable !="No\nvectors" & variable != "Effectiveness"),
+                  color= "grey27", width = 0.2) +
+    geom_text(data = bars_df %>% filter(variable !="Perfect\nvector control\n(theoretical)" & variable != "Effectiveness"),
               mapping = aes(
                 variable, value,
                 #label = percent %>% round() %>% paste0("%\nless")
@@ -133,13 +133,13 @@ plot_bars_effectiveness_LLIN_uncertainty      <- function(df_VCred, colorfinal="
               ),
               position = position_stack(vjust = 0.15),
     ) +
-    geom_label(data = bars_df %>% filter(variable !="No\nvectors" & variable != "Effectiveness"),
-              mapping = aes(
-                variable, value,
-                label = paste0("-",point_difference,"pts"),
-                y=value+5
-              ),hjust = -0.1,  #nudge_x = 0.5,#color="white",
-              position = position_stack()
+    geom_label(data = bars_df %>% filter(variable !="Perfect\nvector control\n(theoretical)" & variable != "Effectiveness"),
+               mapping = aes(
+                 variable, value,
+                 label = paste0("-",point_difference,"pts"),
+                 y=value+5
+               ),hjust = -0.1,  #nudge_x = 0.5,#color="white",
+               position = position_stack()
     )
   
   return(my_plot+ylab("Reduction in vectorial capacity"))
@@ -148,9 +148,9 @@ plot_bars_effectiveness_LLIN_uncertainty      <- function(df_VCred, colorfinal="
 
 
 plot_bars_effectiveness_LLIN_sensitivity      <- function(df_VCred, colorfinal="dodgerblue", order_cascade=c("Functional\nsurvival",
-                                                                                                   "Usage at\ndistribution",
-                                                                                                   "Insecticidal\ndurability",
-                                                                                                   "In-bed\nexposure")){
+                                                                                                             "Usage at\ndistribution",
+                                                                                                             "Insecticidal\ndurability",
+                                                                                                             "In-bed\nexposure")){
   
   
   # Create a dataframe with the right format
@@ -168,7 +168,7 @@ plot_bars_effectiveness_LLIN_sensitivity      <- function(df_VCred, colorfinal="
   bars_df$variable=factor(bars_df$variable, levels=c("bites", "0","1",
                                                      "2","3","4",
                                                      "effectiveness"),
-                          labels=c("Perfect\nvector control",
+                          labels=c("Perfect\nvector control\n(theoretical)",
                                    "Entomological\nefficacy",
                                    order_cascade,
                                    "Effectiveness"))
@@ -199,7 +199,7 @@ plot_bars_effectiveness_LLIN_sensitivity      <- function(df_VCred, colorfinal="
     geom_col(mapping = aes(variable, value),
              fill = "lightgrey",
              color= "black") +
-    geom_text(data = bars_df %>% filter(variable !="Perfect\nvector control" & variable != "Effectiveness"),
+    geom_text(data = bars_df %>% filter(variable !="Perfect\nvector control\n(theoretical)" & variable != "Effectiveness"),
               mapping = aes(
                 variable, value,
                 #label = percent %>% round() %>% paste0("%\nless")
@@ -207,7 +207,7 @@ plot_bars_effectiveness_LLIN_sensitivity      <- function(df_VCred, colorfinal="
               ),
               position = position_stack(vjust = 0.15),
     ) +
-    geom_label(data = bars_df %>% filter(variable !="Perfect\nvector control" & variable != "Effectiveness"),
+    geom_label(data = bars_df %>% filter(variable !="Perfect\nvector control\n(theoretical)" & variable != "Effectiveness"),
                mapping = aes(
                  variable, #value,
                  label = paste0("-",point_difference,"pts"),

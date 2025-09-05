@@ -57,6 +57,8 @@ The folder __processed_data__ contains the data used for the EHT fitting.
 The file __fitted_parameters_posteriormax.csv__ contains the fitted parameters (posterior maximum). 
 The file __fitted_parameters_pyr.csv__ contains summary statistics on the posterior distribution for each fitted parameter.
 
+The __DEMO__ script shows how to apply the model on an example of simulated data.
+
 ### RCT_validation
 
 The main scripts to be executed in that order are the following:

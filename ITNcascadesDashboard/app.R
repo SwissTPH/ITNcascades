@@ -21,8 +21,6 @@ names(eht_description)=c("Experimental hut trial", "Location","Year","Mosquito s
 activity_patterns_Ref<- readRDS(file.path(dirInputs,"activity_patterns_withRefs_small.rds"))
 
 
-
-
 activity_noRhythms =def_activity_patterns()
 activity_noRhythms$humans_in_bed=rep(1, length(activity_noRhythms$HBI))
 activity_noRhythms$humans_indoors=rep(1, length(activity_noRhythms$HBI))
@@ -35,7 +33,7 @@ ui <- page_navbar(
   
   
   
-  title = span(img(src = "logosmall.png"), "LLIN Effectiveness cascades"),
+  title = span(img(src = "logosmall.png"), "ITN Effectiveness cascades"),
   #title = "LLIN Effectiveness cascades",
   # nav_panel(
   #   title = "Introduction", 
@@ -65,7 +63,7 @@ ui <- page_navbar(
         ), 
         
         nav_panel(
-           title = "LLIN cascades",
+           title = "ITN cascades",
           layout_columns(
              card(card_header("Interceptor G2"),plotOutput(outputId = "IG2")),
              card(card_header("Olyset Plus"),plotOutput(outputId = "OlysetPlus"))
