@@ -25,73 +25,6 @@ return_anophelesParam=function(mosqs, value_effect, param, mosqs_exposures){
   return(anophelesParams)
 }
 
-#' #' Calculate phi parameter (preprandial killing effect)
-#' #'
-#' #' @inheritParams P_UA_new
-#' #' @return Updated phi value
-#' calculate_phi=function(alpha0, mu0, mypi, mykappa){
-#'   mu_i=mu0+alpha0*mykappa
-#'   alpha_i=alpha0*(1-mypi)
-#' 
-#'   p_UD_0=P_UD(alpha0,mu0)
-#'   p_UD_i=P_UD(alpha_i,mu_i)
-#' 
-#'   phi=1-(1-p_UD_i)/(1-p_UD_0)
-#'   return(phi)
-#' }
-#' 
-#' #' Probability of remaining Unfed Alive (UA)
-#' #'
-#' #' @param alpha Transition rate to fed
-#' #' @param mu Transition rate to dead
-#' #' @param tt Time
-#' #' @return Probability of staying UA at time tt
-#' P_UA=function(alpha, mu, tt=1){
-#'   return(
-#'     exp(-(alpha+mu)*tt)
-#'   )
-#' }
-#' 
-#' 
-#' #' Probability of becoming Unfed Dead (UD)
-#' #'
-#' #' @inheritParams P_UA
-#' #' @return Probability of being UD at time tt
-#' P_UD=function(alpha, mu, tt=1){
-#' 
-#' 
-#'   return(
-#'     (1-P_UA(alpha,mu, tt))*mu/(alpha+mu)
-#'   )
-#' }
-#' 
-#' 
-#' ######### correct_inbed_exposure #####
-#' #' @title correct_inbed_exposure
-#' #'
-#' #' @description  \code{correct_inbed_exposure}
-#' #' Correct deterrence, preprandial and postprandial parameters for in-bed exposure
-#' #'
-#' #' @param stan_output an object
-#' #' @param inbed exposure coefficient, from AnophelesModel
-#' #'
-#' #' @return updated vector of probabilities
-#' #'
-#' correct_inbed_exposure_gvi <- function(myproba, inbed){
-#' 
-#'   deterrency_update=myproba["Repellent"]*inbed
-#'   kappa_update=myproba["KillingDuringHostSeeking"]*inbed
-#'   postprandial_update=myproba["Postprandialkilling"]*inbed*(1-myproba["Repellent"])/(1-myproba["Repellent"]*inbed)
-#'   preprandial_update=calculate_phi(alpha0=myproba["alpha_0"],
-#'                                    mu0=myproba["mu_0"],
-#'                                    deterrency_update, kappa_update)
-#' 
-#'   myproba_update=c(deterrency_update,preprandial_update,postprandial_update)
-#'   names(myproba_update)=c("Deterrence","PrePrandial","PostPrandial")
-#' 
-#'   return(myproba_update)
-#' }
-
 ######### correct_inbed_exposure #####
 #' @title correct_inbed_exposure
 #'
@@ -213,45 +146,6 @@ create_vectorInterventionParameters = function(my_GVI_params, param="all",#deter
   return(myvectorInterventionParameters)
 }
 
-#' #' Create GVI snippet for the point estimate, the lower and the upper bound of the credible intervals
-#' #'
-#' #' @return a list of inputs for the function called defineGVI_simple
-#' #' @export
-#' create_vectorInterventionParameters_old = function(deterrency, preprandial, postprandial,
-#'                                                 L, kappa, decay= "weibull", myname, mosqs, mosqs_exposures){
-#' 
-#'   anophParam_deterrency=return_anophelesParam(mosqs, value_effect = deterrency, mosqs_exposures=mosqs_exposures)
-#'   anophParam_preprandial=return_anophelesParam(mosqs, value_effect = preprandial, mosqs_exposures=mosqs_exposures)
-#'   anophParam_postprandial=return_anophelesParam(mosqs, value_effect = postprandial, mosqs_exposures=mosqs_exposures)
-#' 
-#'   myvectorInterventionParameters <- list(
-#'     myname = list(
-#'       deterrency = list(
-#'         decay = list(
-#'           L = as.character(L), k=as.character(kappa),
-#'           "function" = decay
-#'         ),
-#'         anophelesParams = anophParam_deterrency
-#'       ),
-#'       preprandialKillingEffect = list(
-#'         decay = list(
-#'           L = as.character(L), k=as.character(kappa),
-#'           "function" = decay
-#'         ),
-#'         anophelesParams = anophParam_preprandial
-#'       ),
-#'       postprandialKillingEffect = list(
-#'         decay = list(
-#'           L = as.character(L), k=as.character(kappa),
-#'           "function" = decay
-#'         ),
-#'         anophelesParams = anophParam_postprandial
-#'       )
-#'     )
-#'   )
-#'   names(myvectorInterventionParameters)=myname
-#'   return(myvectorInterventionParameters)
-#' }
 
 ########
 # Add the GVI parameters to the baseList for OpenMalariaUtilities
