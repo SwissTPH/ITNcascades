@@ -739,9 +739,9 @@ map_bit055_unwashed=extract_stan_posteriormax(results_bit055_unw,data=data_bit05
 
 
 
-map_bit103_washed72_all=extract_stan_posteriormax(results_bit103_w_72_all, data=data_bit103_ifakara_72) %>% 
+map_bit103_washed72_all=extract_stan_posteriormax(results_bit103_w_72_all, data=data_bit103_72) %>% 
   mutate(washed_status="Washed", EHT="Assenga", reference="Assenga et al., Tanzania")
-map_bit103_unwashed72_all=extract_stan_posteriormax(results_bit103_unw_72_all,  data=data_bit103_ifakara_72) %>% 
+map_bit103_unwashed72_all=extract_stan_posteriormax(results_bit103_unw_72_all,  data=data_bit103_72) %>% 
   mutate(washed_status="Unwashed", EHT="Assenga", reference="Assenga et al., Tanzania")
 
 map_bit103_washed72_CI=extract_stan_posteriormax(results_bit103_w_72_CI, data=data_bit103_CI_72) %>% 
