@@ -1,0 +1,12 @@
+﻿id,id_name,stan_name_unwashed,stan_name_washed,data_name,EHT_short,EHT,stan_name_unwashed24,stan_name_washed24,data_name24
+1,Assenga_TZ,stan_assenga_unwashed_72_all.rds,stan_assenga_washed_72_all.rds,assenga_all_72.csv,Assenga,Assenga et al. 2025,stan_assenga_unwashed_24_all.rds,stan_assenga_washed_24_all.rds,assenga_all_24.csv
+2,Kibondo,stan_kibondo_unwashed_72.rds,stan_kibondo_washed_72.rds,kibondo_72.csv,Kibondo,Kibondo et al. 2022,stan_kibondo_unwashed_24.rds,stan_kibondo_washed_24.rds,kibondo_24.csv
+3,BIT080,stan_BIT080_unwashed_72.rds,stan_BIT080_washed_72.rds,bit080_72.csv,BIT080,BIT080,stan_BIT080_unwashed_24.rds,stan_BIT080_washed_24.rds,bit080_24.csv
+4,BIT055,stan_BIT055_unwashed_24.rds,stan_BIT055_washed_24.rds,bit055_24.csv,BIT055,BIT055,stan_BIT055_unwashed_24.rds,stan_BIT055_washed_24.rds,bit055_24.csv
+5,Odufuwa,stan_odufuwa_unwashed_24.rds,stan_odufuwa_washed_24.rds,Odufuwa_24.csv,Odufuwa,Odufuwa et al. 2024,stan_odufuwa_unwashed_24.rds,stan_odufuwa_washed_24.rds,Odufuwa_24.csv
+6,Martin_gambiae,stan_martin_unwashed_72_gambiae.rds,stan_martin_36m_72_gambiae.rds,martin_gambiae_72.csv,Martin,Martin et al. 2024,stan_martin_unwashed_24_gambiae.rds,stan_martin_36m_24_gambiae.rds,martin_gambiae_24.csv
+7,Martin_funestus,stan_martin_unwashed_72_funestus.rds,stan_martin_36m_72_funestus.rds,martin_funestus_72.csv,"Martin, f","Martin et al. 2024, f",stan_martin_unwashed_24_funestus.rds,stan_martin_36m_24_funestus.rds,martin_funestus_24.csv
+8,Assenga_CI,stan_assengaCotedIvoire_unwashed_72.rds,stan_assengaCotedIvoire_washed_72.rds,assenga_cotedivoire_72.csv,"Assenga, CI","Assenga et al. 2025, CI",stan_assengaCotedIvoire_unwashed_24.rds,stan_assengaCotedIvoire_washed_24.rds,assenga_cotedivoire_24.csv
+9,Nguessan,stan_nguessan_unwashed.rds,stan_nguessan_washed.rds,nguessan_72.csv,Nguessan,Nguessan et al. 2016,NULL,NULL,NULL
+10,Sovegnon1,stan_sovegnonIG1_unwashed.rds,stan_sovegnonIG1_aged.rds,data_sovegnon_IG1_LRS_72.csv,Sovegnon1,Sovegnon et al. 2024,NULL,NULL,NULL
+11,Sovegnon2,stan_sovegnonIG2_unwashed.rds,stan_sovegnonIG2_aged.rds,data_sovegnon_IG2_SRS_72.csv,Sovegnon2,Sovegnon et al. 2024,NULL,NULL,NULL

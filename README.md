@@ -73,6 +73,13 @@ Other scripts are functions to be sourced while running the analysis.
 The folder __csv_inputs__ contains the data and simulation outputs required to reproduce the manuscript's figures.
 
 
+### Reproducing manuscript's figures
+
+Figures 1 and 4 can be reproduced based on the [data](https://github.com/SwissTPH/ITNcascades/tree/main/EHT_fit/processed_data) and [this code](https://github.com/SwissTPH/ITNcascades/tree/main/EHT_fit).
+Figures 2 and 3 can be reproduced using the dynamical model [simulations](https://github.com/SwissTPH/ITNcascades/tree/main/RCT_validation/csv_inputs) and [this code](https://github.com/SwissTPH/ITNcascades/blob/main/RCT_validation/5_validation_summary_figures.R). 
+
+
+
 ## Authors contact
 
 - Clara CHAMPAGNE - [@GitHub](https://github.com/clchampag) - clara.champagne@swisstph.ch

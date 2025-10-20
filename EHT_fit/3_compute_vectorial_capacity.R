@@ -228,113 +228,113 @@ if(rerun){
 #######################
 # PLOT SUMMARY
 ######################
-estimates_kibondo_72=read.csv(file.path(outputsDir, "estimates_kibondo_72.csv"))
-estimates_kibondo_24=read.csv(file.path(outputsDir, "estimates_kibondo_24.csv"))
+seed=1
+list_eht=read.csv(file.path(scriptDir, "EHTlist.csv"))
 
-estimates_bit059=read.csv(file.path(outputsDir, "estimates_odufuwa_24.csv"))
+all_estimates0=data.frame()
 
-estimates_bit055=read.csv(file.path(outputsDir, "estimates_bit055_24.csv"))
+nsamples=1000
 
-estimates_bit080_72=read.csv(file.path(outputsDir, "estimates_bit080_72.csv"))
-estimates_bit080_24=read.csv(file.path(outputsDir, "estimates_bit080_24.csv"))
+for (i in list_eht$id){
+  
+  eht=list_eht[list_eht$id==i,]
+  results_unw<- readRDS(file.path(stanDir,eht$stan_name_unwashed))
+  results_w<- readRDS(file.path(stanDir,eht$stan_name_washed))
+  data=read.csv(file.path(dataDir, eht$data_name)) %>% select(insecticide_name, treatment)%>% unique()
+  
+  estimates_unwashed=extract_stan_uncertainty(res=results_unw,nsamples=nsamples, seed=seed)%>% 
+    mutate(washed_status="Unwashed") %>% rename(treatment=insecticide) %>%
+    left_join(data)
+  
+  estimates_washed=extract_stan_uncertainty(res=results_w,nsamples=nsamples, seed=seed)%>% 
+    mutate(washed_status="Washed")%>% rename(treatment=insecticide) %>%
+    left_join(data)
+  
+  estimates=rbind(estimates_unwashed, estimates_washed)%>%mutate(EHT=eht$EHT, EHT_short=eht$EHT_short, id=eht$id)
+  
+  all_estimates0=rbind(all_estimates0, estimates)
+}
 
-estimates_bit103_72=read.csv(file.path(outputsDir, "estimates_assenga_72_all.csv"))
-
-estimates_bit103_72_CI=read.csv(file.path(outputsDir, "estimates_assengaCotedIvoire_72.csv"))
 
 
-estimates_martin_72=read.csv(file.path(outputsDir, "estimates_martin_72_gambiae.csv"))
-estimates_martin_72_funestus=read.csv(file.path(outputsDir, "estimates_martin_72_funestus.csv"))
+impacts_72=read.csv(file.path(outputsDir, "impacts_EHT_control.csv"))%>%
+  rename(nsample=X, mean=VCred)%>% mutate(param="VCred")%>%
+  mutate(EHT_short0=EHT_short,
+         EHT_short=ifelse((EHT_short0=="Sovegnon" & insecticide_name=="Pyrethroid"), "Sovegnon1",ifelse(EHT_short0=="Sovegnon" & insecticide_name=="Interceptor G2", "Sovegnon2", EHT_short0)))%>%
+  left_join(list_eht %>% select(EHT_short, EHT, id))%>% select(-EHT_short0)
 
-estimates_sovegnon_72=read.csv(file.path(outputsDir, "estimates_sovegnon_72.csv"))
-estimates_nguessan_72=read.csv(file.path(outputsDir, "estimates_nguessan_72.csv"))
-
-
-impacts_72=read.csv(file.path(outputsDir, "impacts_EHT_control.csv"))
-
-impacts_72_summary=impacts_72 %>% group_by(EHT_short, insecticide_name,washed_status)%>% 
-  summarise(mean=mean(VCred), X2.5.=quantile(VCred, probs = 0.025), X97.5.=quantile(VCred, probs = 0.975))%>%
-  mutate(param ="VCred", EHT=ifelse(EHT_short=="Martin","Martin et al. 2024",
-                                           ifelse(EHT_short=="Nguessan","Nguessan et al. 2016", 
-                                                  ifelse(EHT_short=="Sovegnon","Sovegnon et al. 2024",
-                                                         ifelse(EHT_short=="Kibondo","Kibondo et al. 2022",
-                                                                ifelse(EHT_short=="Odufuwa","Odufuwa et al. 2024", 
-                                                                       ifelse(EHT_short=="Assenga","Assenga et al. 2025", 
-                                                                              ifelse(EHT_short=="Martin, f","Martin et al. 2024, f", 
-                                                                                     ifelse(EHT_short=="Assenga, CI","Assenga et al. 2025, CI", 
-                                                                                            EHT_short ) )
-                                                 )))))), X=NA)
 
 
 #############################
-# endpoint: longest available per trial
+# FIGURE 1
 
 # formating the results
-all_estimates=rbind(estimates_kibondo_72 %>%mutate(EHT="Kibondo et al. 2022", EHT_short="Kibondo"),
-                    estimates_bit055 %>%mutate(EHT="BIT055", EHT_short=EHT),
-                    estimates_bit059 %>%mutate(EHT="Odufuwa et al. 2024", EHT_short="Odufuwa"),
-                    estimates_bit080_72 %>%mutate(EHT="BIT080", EHT_short=EHT),
-                    estimates_bit103_72 %>%mutate(EHT="Assenga et al. 2025", EHT_short="Assenga"),
-                    estimates_bit103_72_CI %>%mutate(EHT="Assenga et al. 2025, CI", EHT_short="Assenga, CI"),
-                    estimates_martin_72 %>%mutate(EHT="Martin et al. 2024", EHT_short="Martin"),
-                    estimates_martin_72_funestus %>%mutate(EHT="Martin et al. 2024, f", EHT_short="Martin, f"),
-                    estimates_sovegnon_72 %>%mutate(EHT="Sovegnon et al. 2024", EHT_short="Sovegnon"),
-                    estimates_nguessan_72 %>%mutate(EHT="Nguessan et al. 2016", EHT_short="Nguessan"),
-                    impacts_72_summary 
-)%>%
+all_estimates=rbind(all_estimates0 %>% select( -treatment),impacts_72 )%>%
   mutate(insecticide_name=ifelse(insecticide_name %in% c("IG2", "Interceptor_G2","InterceptorG2","Interceptor®G2", "Interceptor\xaeG2", "Interceptor G2", "interceptorG2", "IG2.Aged"), "Interceptor G2",
-                                 ifelse(insecticide_name %in% c("Olyset_Plus", "OlysetPlus", "Olyset Plus", "olysetplus"), "Olyset Plus", "Pyrethroid-only")),
+                                 ifelse(insecticide_name %in% c("Olyset_Plus", "OlysetPlus", "Olyset Plus", "olysetplus"), "Olyset Plus", 
+                                        ifelse(insecticide_name %in% c("IG1", "IG1.Aged", "ILN", "interceptor", "Interceptor®", "Magnet", "MagNet_ITN", "MiraNet", "Olyset", "PermaNet2.0","Pyrethroid"), "Pyrethroid-only", "Control"))),
          param1=gsub("Initial", "", gsub("Efficacy", "", gsub("Rate" ,"",  param))))%>%
-  #mutate(EHT=gsub(" et al.", "\net al.", EHT), EHT_full=EHT)%>% 
-  filter(param1 !="KillingDuringHostSeeking")%>%
-  mutate(EHT=ifelse((EHT_short=="Sovegnon" & insecticide_name=="Pyrethroid-only"), "Sovegnon et al. 2024, 1",ifelse(EHT_short=="Sovegnon" & insecticide_name=="Interceptor G2", "Sovegnon et al. 2024, 2", EHT)))
+  filter(!param1 %in% c("KillingDuringHostSeeking", "alpha_0", "mu_0"))%>%
+  filter(insecticide_name !="Control")
 
-all_estimates$param2=factor(all_estimates$param1, levels=c("Repellency", "Preprandialkilling", "Postprandialkilling", "VCred"),
-                            labels=c(expression(paste("Reduction in host availability (", pi,")")), expression(paste("Pre-prandial killing effect (", phi,")")),expression(paste("Post-prandial killing effect (", xi,")")), expression(paste("Entomological efficacy"))))
-all_estimates$param3=factor(all_estimates$param1, levels=c("Repellency", "Preprandialkilling", "Postprandialkilling", "VCred"),
-                            labels=c("Reduction in host availability", "Pre-prandial killing effect","Post-prandial killing effect","Entomological efficacy"))
-all_estimates$EHT=factor(all_estimates$EHT, levels=c("Assenga et al. 2025", "Kibondo et al. 2022", "BIT080", "BIT055", "Odufuwa et al. 2024", "Martin et al. 2024", "Martin et al. 2024, f", "Assenga et al. 2025, CI", "Nguessan et al. 2016","Sovegnon et al. 2024, 1","Sovegnon et al. 2024, 2"))
-all_estimates$EHT_id= as.numeric(all_estimates$EHT)
-all_estimates$country=ifelse(all_estimates$EHT_short %in% c("Sovegnon", "Nguessan", "Assenga, CI"), "Benin", "Tanzania")
+all_estimates$param2=factor(all_estimates$param1, levels=c("Repellent", "Preprandialkilling", "Postprandialkilling", "VCred"),
+                            labels=c(expression(paste("Reduction in host availability (", pi,")")), expression(paste("Pre-prandial killing effect (", phi,")")),expression(paste("Post-prandial killing effect (", xi,")")), expression(paste("Vectorial capacity reduction"))))
+all_estimates$param3=factor(all_estimates$param1, levels=c("Repellent", "Preprandialkilling", "Postprandialkilling", "VCred"),
+                            labels=c("Reduction in host availability", "Pre-prandial killing effect","Post-prandial killing effect","Vectorial capacity reduction"))
+all_estimates$EHT_id= factor(all_estimates$id,levels=c("1", "2", "3", "4","5", "6", "7", "8","9", "10", "11"))
+all_estimates$country=ifelse(all_estimates$EHT_short %in% c("Sovegnon1","Sovegnon2", "Nguessan", "Assenga, CI"), "Benin", "Tanzania")
 
 all_estimates_simple=all_estimates %>%
-  mutate(washed_status=ifelse(washed_status=="Washed20", "Washed", washed_status),
-         label_height=ifelse(param2=="Increase in host seeking mortality",-0.07, -0.03))
+  mutate(washed_status=ifelse(washed_status=="Washed20", "Washed", washed_status))%>%
+  rename(value=mean)
 
-all_estimates_simple_mean=all_estimates_simple%>% group_by(insecticide_name, param2, washed_status)%>% summarise(meanmean=mean(mean))%>%
+all_estimates_simple_mean=all_estimates_simple%>% group_by(insecticide_name, param2, washed_status)%>% summarise(meanmean=mean(value))%>%
   mutate( washed_status=ifelse(washed_status=="Unwashed", "Unwashed", "Washed 20x/Aged"))
 
 
 # plot all estimates
 all_estimates_simple %>%
   mutate( washed_status=ifelse(washed_status=="Unwashed", "Unwashed", "Washed 20x/Aged"))%>%
+  mutate( washed_status=factor(washed_status, levels=c("Unwashed", "Washed 20x/Aged")))%>%
+  mutate( washed_status2=factor(washed_status, levels=c("Unwashed", "Washed 20x/Aged"), labels=c("Unw.", "20x/Aged")))%>%
   ggplot()+
-  geom_col(aes(x=insecticide_name, y=mean, fill=insecticide_name, group=interaction( washed_status, EHT), alpha=washed_status), stat="identity", position=position_dodge())+
-  geom_errorbar(aes(x=insecticide_name, ymin=X2.5., ymax=X97.5., color=insecticide_name,  group=interaction( washed_status, EHT)),position=position_dodge(0.9), width=0.4)+
-  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Interceptor G2"),
-               aes(y = meanmean, yend=meanmean, x= 0.55, xend = 1.45, color=insecticide_name, linetype = washed_status), linewidth = 0.9) +
-  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Olyset Plus"),
-               aes(y = meanmean, yend=meanmean, x= 1.55, xend = 2.45, color=insecticide_name, linetype = washed_status), linewidth = 0.9) +
-  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Pyrethroid-only"),
-               aes(y = meanmean, yend=meanmean, x= 2.55, xend = 3.45, color=insecticide_name, linetype = washed_status), linewidth = 0.9) +
+  geom_boxplot(aes(x=insecticide_name, y=value, fill=insecticide_name, color=insecticide_name,  group=interaction( EHT_id, washed_status, insecticide_name), alpha=washed_status), position=position_dodge(0.9), width=0.5)+
+  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Interceptor G2",washed_status=="Unwashed"),
+               aes(y = meanmean, yend=meanmean, x= 0.55, xend = .95, linetype = washed_status), linewidth = 0.9) +
+  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Olyset Plus",washed_status=="Unwashed"),
+               aes(y = meanmean, yend=meanmean, x= 1.55, xend = 1.95, linetype = washed_status), linewidth = 0.9) +
+  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Pyrethroid-only",washed_status=="Unwashed"),
+               aes(y = meanmean, yend=meanmean, x= 2.55, xend = 2.95, linetype = washed_status), linewidth = 0.9) +
+  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Interceptor G2",washed_status!="Unwashed"),
+               aes(y = meanmean, yend=meanmean, x= 1, xend = 1.45, linetype = washed_status), linewidth = 0.9) +
+  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Olyset Plus",washed_status!="Unwashed"),
+               aes(y = meanmean, yend=meanmean, x= 2, xend = 2.45, linetype = washed_status), linewidth = 0.9) +
+  geom_segment(data=all_estimates_simple_mean%>% filter(insecticide_name =="Pyrethroid-only",washed_status!="Unwashed"),
+               aes(y = meanmean, yend=meanmean, x= 3, xend = 3.45, linetype = washed_status), linewidth = 0.9) +
   facet_wrap( . ~param2, scales = "free_x", labeller = label_parsed)+
   theme_bw()+#ylim(0,1)+
   labs(x="", y="", color="", fill="", alpha="", linetype="")+
-  scale_alpha_manual(values=c(  0.7, 0.4),na.translate=FALSE)+
+  scale_alpha_manual(values=c(  0.7, 0.2),na.translate=FALSE)+
   scale_color_manual(values=c("darkorange","dodgerblue","darkgrey" ))+
   scale_fill_manual(values=c("darkorange","dodgerblue","darkgrey"))+
   scale_y_continuous(breaks=c(0, 0.2, 0.4, 0.6, 0.8, 1))+
   theme(legend.position = "bottom",
         strip.text.x = element_text(size = 14),
         axis.text=element_text(size=14), strip.background =element_rect(fill="white"), legend.text =element_text(size=14) )+ 
-  geom_text(aes(label=EHT_id, x=insecticide_name, y=label_height,group=EHT),
+  geom_text(aes(label=EHT_id, x=insecticide_name, y=-0.03,group=interaction(EHT_id,washed_status)),
+            position = position_dodge(width=0.9),size=2.3)+#ylim(-0.05,1)+ 
+  geom_text(aes(label=washed_status2, x=insecticide_name, y=-0.1,group=washed_status),
             position = position_dodge(width=0.9),size=3.5)+#ylim(-0.05,1)+ 
-  guides(fill = "none",color = "none")
-ggsave(file.path(plotDir, "plot_EHTfit_pyr_all_new.png"), width=12, height=10)
+  guides(fill = "none",color = "none", alpha="none")
+ggsave(file.path(plotDir, "Figure1.png"), width=13, height=10)
 
 
+########
+# Summary
 
-final_table=all_estimates_simple %>%
+final_table= all_estimates_simple%>%
+  group_by(insecticide_name, param3, washed_status, EHT, EHT_id)%>% 
+  summarise(mean=mean(value), X2.5.=quantile(value, prob=0.025), X97.5.=quantile(value, prob=0.975)) %>%
   mutate(mean=round(mean, digits = 2),X2.5.=round(X2.5., digits = 2),X97.5.=round(X97.5., digits = 2))%>%
   select(insecticide_name, EHT, EHT_id, param3, washed_status, mean, X2.5., X97.5.)%>%
   rename(netType=insecticide_name, parameter=param3, q025=X2.5., q975=X97.5.)%>%
@@ -342,7 +342,7 @@ final_table=all_estimates_simple %>%
   mutate(halflife_insecticide=3/(1-mean_Washed/mean_Unwashed)
   )
 
-write.csv(final_table, file.path(scriptDir, "fitted_parameters_pyr.csv"), row.names = F)
+write.csv(final_table, file.path(scriptDir, "fitted_parameters.csv"), row.names = F)
 
 final_table %>%
   select(-halflife_insecticide)%>%
@@ -361,29 +361,14 @@ final_table %>%
   gt::gtsave(filename = file.path(plotDir, "outputs_ento_efficacy_all.docx"))
 
 
-
-final_table %>% filter(parameter=="Entomological efficacy")%>%
-  mutate(reduction_wash=100*(mean_Unwashed-mean_Washed)/mean_Unwashed)%>%
-  View()
-
-final_table %>% filter(parameter=="Entomological efficacy", netType=="Pyrethroid-only")%>%
-  mutate(reduction_wash=100*(mean_Unwashed-mean_Washed)/mean_Unwashed)%>%
-  View()
-
-
-impacts_72_summary%>% 
-  pivot_wider(id_cols = c(EHT_short, insecticide_name), names_from = washed_status, values_from = mean)%>%
-  mutate(red=(Unwashed-Washed)/Unwashed)%>%View()
-
-
 ###################################################
 # COMPUTE DIFFERENCE BETWEEN PRODUCTS WITHIN EACH EHT
 
 impacts_pivot=impacts_72 %>%
   filter(washed_status=="Unwashed")%>%
   mutate(insecticide_name=gsub(" ", "", insecticide_name), 
-         Y=X%%1000, 
-         VCred=VCred*100)%>%
+         Y=nsample%%1000, 
+         VCred=mean*100)%>%
   pivot_wider(id_cols = c(EHT_short,Y, washed_status), names_from = insecticide_name, values_from = VCred)%>%
   mutate(diff_IG2_pyr=InterceptorG2-Pyrethroid, 
          diff_OP_pyr=OlysetPlus-Pyrethroid,
